@@ -1,5 +1,35 @@
 import ProjectDescription
 
+let destinations: Destinations = [.iPhone, .iPad, .macCatalyst]
+let deployment: DeploymentTargets = .iOS("26.0")
+
+func framework(
+    _ name: String,
+    bundleIdSuffix: String,
+    dependencies: [TargetDependency] = []
+) -> [Target] {
+    [
+        .target(
+            name: name,
+            destinations: destinations,
+            product: .framework,
+            bundleId: "com.broadway.\(bundleIdSuffix)",
+            deploymentTargets: deployment,
+            sources: ["\(name)/Sources/**"],
+            dependencies: dependencies
+        ),
+        .target(
+            name: "\(name)Tests",
+            destinations: destinations,
+            product: .unitTests,
+            bundleId: "com.broadway.\(bundleIdSuffix).tests",
+            deploymentTargets: deployment,
+            sources: ["\(name)/Tests/**"],
+            dependencies: [.target(name: name)]
+        ),
+    ]
+}
+
 let project = Project(
     name: "Broadway",
     options: .options(
@@ -7,57 +37,30 @@ let project = Project(
         developmentRegion: "en"
     ),
     targets: [
-        // MARK: - BroadwayCatalog App
-
         .target(
             name: "BroadwayCatalog",
-            destinations: [.iPhone, .iPad, .macCatalyst],
+            destinations: destinations,
             product: .app,
             bundleId: "com.broadway.catalog",
-            deploymentTargets: .iOS("26.0"),
+            deploymentTargets: deployment,
             infoPlist: .extendingDefault(with: [
                 "UILaunchScreen": .dictionary([:]),
                 "UIApplicationSupportsIndirectInputEvents": .boolean(true),
             ]),
             sources: ["BroadwayCatalog/Sources/**"],
             resources: ["BroadwayCatalog/Resources/**"],
-            dependencies: [
-                .target(name: "BroadwayUI"),
-            ]
+            dependencies: [.target(name: "BroadwayUI")]
         ),
         .target(
             name: "BroadwayCatalogTests",
-            destinations: [.iPhone, .iPad, .macCatalyst],
+            destinations: destinations,
             product: .unitTests,
             bundleId: "com.broadway.catalog.tests",
-            deploymentTargets: .iOS("26.0"),
+            deploymentTargets: deployment,
             sources: ["BroadwayCatalog/Tests/**"],
-            dependencies: [
-                .target(name: "BroadwayCatalog"),
-            ]
-        ),
-
-        // MARK: - BroadwayUI Framework
-
-        .target(
-            name: "BroadwayUI",
-            destinations: [.iPhone, .iPad, .macCatalyst],
-            product: .framework,
-            bundleId: "com.broadway.ui",
-            deploymentTargets: .iOS("26.0"),
-            sources: ["BroadwayUI/Sources/**"],
-            dependencies: []
-        ),
-        .target(
-            name: "BroadwayUITests",
-            destinations: [.iPhone, .iPad, .macCatalyst],
-            product: .unitTests,
-            bundleId: "com.broadway.ui.tests",
-            deploymentTargets: .iOS("26.0"),
-            sources: ["BroadwayUI/Tests/**"],
-            dependencies: [
-                .target(name: "BroadwayUI"),
-            ]
+            dependencies: [.target(name: "BroadwayCatalog")]
         ),
     ]
+    + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")])
+    + framework("BroadwayCore", bundleIdSuffix: "core")
 )

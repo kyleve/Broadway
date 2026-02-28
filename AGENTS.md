@@ -25,6 +25,11 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │   │   └── BroadwayUI.swift            # Framework entry point
 │   └── Tests/                          # UI framework unit tests (Swift Testing)
 │       └── BroadwayUITests.swift
+├── BroadwayCore/
+│   ├── Sources/                        # Core framework source code
+│   │   └── BroadwayCore.swift          # Framework entry point
+│   └── Tests/                          # Core framework unit tests (Swift Testing)
+│       └── BroadwayCoreTests.swift
 ├── Plans/                              # Archived implementation plans (see index below)
 ├── ide                                 # Dev script (runs tuist generate, optionally tuist install)
 ├── LICENSE                             # Apache 2.0
@@ -48,17 +53,20 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 | `BroadwayCatalogTests` | `.unitTests` | `com.broadway.catalog.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayUI` | `.framework` | `com.broadway.ui` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayUITests` | `.unitTests` | `com.broadway.ui.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
+| `BroadwayCore` | `.framework` | `com.broadway.core` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
+| `BroadwayCoreTests` | `.unitTests` | `com.broadway.core.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 
 ### Dependency Graph
 
 ```
-BroadwayCatalog (app) ──▶ BroadwayUI (framework)
+BroadwayCatalog (app) ──▶ BroadwayUI (framework) ──▶ BroadwayCore (framework)
 ```
 
 ## Key Conventions
 
 - **SwiftUI** is the UI framework. Catalog app views live under `BroadwayCatalog/Sources/`.
 - **BroadwayUI** is the reusable component library. All shared UI lives under `BroadwayUI/Sources/`.
+- **BroadwayCore** provides foundational utilities and shared logic. Source lives under `BroadwayCore/Sources/`.
 - **Swift Testing** (`import Testing`) is used for unit tests, not XCTest.
 - Source files use `<Target>/Sources/**` globs; test files use `<Target>/Tests/**`.
 - Resources (asset catalogs, localization files, etc.) go in `BroadwayCatalog/Resources/`.

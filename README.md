@@ -57,6 +57,11 @@ Broadway/
 │   │   └── BroadwayUI.swift
 │   └── Tests/                          # UI framework unit tests
 │       └── BroadwayUITests.swift
+├── BroadwayCore/
+│   ├── Sources/                        # Core framework source files
+│   │   └── BroadwayCore.swift
+│   └── Tests/                          # Core framework unit tests
+│       └── BroadwayCoreTests.swift
 ├── Plans/                              # Archived implementation plans
 ├── ide                                 # Dev script (generate project)
 ├── LICENSE                             # Apache 2.0
@@ -71,6 +76,8 @@ Broadway/
 | **BroadwayCatalogTests** | Unit Tests | iOS, Mac Catalyst |
 | **BroadwayUI** | Framework | iOS, Mac Catalyst |
 | **BroadwayUITests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayCore** | Framework | iOS, Mac Catalyst |
+| **BroadwayCoreTests** | Unit Tests | iOS, Mac Catalyst |
 
 ## License
 
