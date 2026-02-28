@@ -57,6 +57,7 @@ Broadway/
 │   │   └── BroadwayUI.swift
 │   └── Tests/                          # UI framework unit tests
 │       └── BroadwayUITests.swift
+├── Plans/                              # Archived implementation plans
 ├── ide                                 # Dev script (generate project)
 ├── LICENSE                             # Apache 2.0
 └── README.md
