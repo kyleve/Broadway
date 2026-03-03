@@ -8,7 +8,8 @@
 import Foundation
 
 
-@propertyWrapper public struct CopyOnWrite<Value> {
+@propertyWrapper
+public struct CopyOnWrite<Value> {
     
     public init(wrappedValue : Value) {
         box = .init(value: wrappedValue)
@@ -37,13 +38,17 @@ import Foundation
     
     fileprivate class Box {
         
+        var value : Value
+        
         init(value: Value) {
             self.value = value
         }
-        
-        var value : Value
     }
 }
+
+
+extension CopyOnWrite : Equatable where Value:Equatable {}
+
 
 extension CopyOnWrite.Box : Equatable where Value:Equatable {
     
@@ -52,5 +57,3 @@ extension CopyOnWrite.Box : Equatable where Value:Equatable {
     }
     
 }
-
-extension CopyOnWrite : Equatable where Value:Equatable {}
