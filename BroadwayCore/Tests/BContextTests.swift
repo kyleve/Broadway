@@ -64,7 +64,7 @@ struct BContextStylesheetTests {
         BContext(
             traits: traits,
             themes: themes,
-            stylesheets: BStylesheets(traits: traits, themes: themes)
+            stylesheets: BStylesheets(config: .init(traits: traits, themes: themes))
         )
     }
 
@@ -164,7 +164,7 @@ struct BContextStylesheetTests {
 
     @Test("Circular stylesheet dependency throws CyclicDependencyError")
     func cycleThrows() {
-        let stylesheets = BStylesheets(traits: .init(), themes: .init())
+        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
         #expect(throws: CyclicDependencyError.self) {
             _ = try stylesheets.get(CycleA.self)
@@ -173,7 +173,7 @@ struct BContextStylesheetTests {
 
     @Test("CyclicDependencyError includes the dependency path")
     func cyclePath() {
-        let stylesheets = BStylesheets(traits: .init(), themes: .init())
+        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
         let error = #expect(throws: CyclicDependencyError.self) {
             _ = try stylesheets.get(CycleA.self)

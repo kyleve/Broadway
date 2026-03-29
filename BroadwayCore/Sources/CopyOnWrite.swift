@@ -67,7 +67,7 @@ public struct CopyOnWrite<Value> {
     ///   meaning changes will be visible to all instances that share the same
     ///   underlying storage. Only use this when you are certain the storage is
     ///   not shared, or when shared mutation is intentional.
-    public var _unsafeUnderlyingValue : Value {
+    @_spi(Internal) public var _unsafeUnderlyingValue : Value {
         get { box.value }
         nonmutating set { box.value = newValue }
     }

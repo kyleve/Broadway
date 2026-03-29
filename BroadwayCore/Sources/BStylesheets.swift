@@ -47,11 +47,35 @@ public struct SlicingContext {
 /// first access and cached for subsequent lookups with the same key.
 public struct BStylesheets : Equatable {
 
-    public static func == (lhs : Self, rhs : Self) -> Bool {
-        lhs.traits == rhs.traits
-        && lhs.themes == rhs.themes
-        && lhs.stylesheets == rhs.stylesheets
+    /// The current trait values (accessibility, size class, etc.).
+    public var traits : BTraits {
+        get { config.traits }
+        set { config.traits = newValue }
     }
+
+    /// The current theme values.
+    public var themes : BThemes {
+        get { config.themes }
+        set { config.themes = newValue }
+    }
+
+    /// The inputs that determine stylesheet identity. Two `BStylesheets`
+    /// values are equal when their configurations match, regardless of
+    /// how much of the cache has been lazily populated.
+    var config : Config
+
+    struct Config : Equatable {
+        var traits : BTraits
+        var themes : BThemes
+    }
+
+    // MARK: Equatable
+
+    public static func == (lhs : Self, rhs : Self) -> Bool {
+        lhs.config == rhs.config
+    }
+
+    // MARK: Lookup
 
     /// Returns the cached stylesheet of the given type, creating it lazily if needed.
     ///
@@ -59,7 +83,7 @@ public struct BStylesheets : Equatable {
     public func get<Stylesheet:BStylesheet>(_ type : Stylesheet.Type) throws -> Stylesheet {
         let key = Key(stylesheet: .init(Stylesheet.self), traits: traits, themes: themes)
 
-        guard let value = stylesheets[key], let value = value.base as? Stylesheet else {
+        guard let value = cache[key], let value = value.base as? Stylesheet else {
             let id = TypeIdentifier(Stylesheet.self)
 
             let creating = _creating._unsafeUnderlyingValue
@@ -75,7 +99,7 @@ public struct BStylesheets : Equatable {
             let new = try Stylesheet(context: context)
 
             _creating._unsafeUnderlyingValue.removeLast()
-            _stylesheets._unsafeUnderlyingValue[key] = AnyEquatable(new)
+            _cache._unsafeUnderlyingValue[key] = AnyEquatable(new)
 
             return new
         }
@@ -87,14 +111,13 @@ public struct BStylesheets : Equatable {
     /// replacing any previously cached instance for the current traits and themes.
     public mutating func set<Stylesheet:BStylesheet>(_ newValue : Stylesheet) {
         let key = Key(stylesheet: .init(Stylesheet.self), traits: traits, themes: themes)
-        stylesheets[key] = AnyEquatable(newValue)
+        cache[key] = AnyEquatable(newValue)
     }
 
-    var traits : BTraits
-    var themes : BThemes
+    // MARK: Cache
 
     // TODO: Eventually we should clear this out on memory warnings for sheets not accessed within 10(?) min
-    @CopyOnWrite private var stylesheets : [Key:AnyEquatable] = [:]
+    @CopyOnWrite private var cache : [Key:AnyEquatable] = [:]
 
     @CopyOnWrite private var creating : [TypeIdentifier] = []
 

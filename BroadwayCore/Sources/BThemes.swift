@@ -39,7 +39,11 @@ public struct BThemes : Equatable, Hashable {
         set {
             let id = TypeIdentifier(Theme.self)
             
-            themes[id] = AnyHashable(newValue)
+            if let newValue {
+                themes[id] = AnyHashable(newValue)
+            } else {
+                themes[id] = nil
+            }
         }
     }
     

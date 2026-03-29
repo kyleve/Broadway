@@ -1,5 +1,5 @@
 import Testing
-@testable import BroadwayCore
+@_spi(Internal) @testable import BroadwayCore
 
 
 @Suite("CopyOnWrite")
