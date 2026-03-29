@@ -10,17 +10,27 @@ import Foundation
 
 public protocol BStylesheet : Equatable {
     
-    init(context : Any)
+    init(context : SlicingContext)
 }
 
-public struct BStylesheets {
+public struct SlicingContext {
     
-    public subscript<Stylesheet:BStylesheet>(_ value : Stylesheet.Type) -> Stylesheet? {
+    public var stylesheets : BStylesheets
+}
+
+public struct BStylesheets : Equatable {
+    
+    public subscript<Stylesheet:BStylesheet>(_ value : Stylesheet.Type) -> Stylesheet {
         get {
             let id = ObjectIdentifier(Stylesheet.self)
             
-            guard let value = stylesheets[id] as? Stylesheet else {
-                return nil
+            guard let value = stylesheets[id], let value = value.base as? Stylesheet else {
+                let context = SlicingContext(stylesheets: self)
+                let new = Stylesheet(context: context)
+                
+                _stylesheets._unsafeUnderlyingValue[id] = AnyEquatable(new)
+                
+                return new
             }
             
             return value
@@ -33,5 +43,9 @@ public struct BStylesheets {
         }
     }
     
-    private var stylesheets : [ObjectIdentifier:AnyEquatable] = [:]
+    mutating func clear() {
+        stylesheets.removeAll(keepingCapacity: true)
+    }
+    
+    @CopyOnWrite private var stylesheets : [ObjectIdentifier:AnyEquatable] = [:]
 }

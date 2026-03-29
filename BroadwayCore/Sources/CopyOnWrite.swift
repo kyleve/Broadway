@@ -69,7 +69,7 @@ public struct CopyOnWrite<Value> {
     ///   not shared, or when shared mutation is intentional.
     public var _unsafeUnderlyingValue : Value {
         get { box.value }
-        set { box.value = newValue }
+        nonmutating set { box.value = newValue }
     }
 
     private var box : Box

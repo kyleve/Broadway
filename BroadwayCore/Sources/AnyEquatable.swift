@@ -26,17 +26,17 @@ import Foundation
 struct AnyEquatable : Equatable {
 
     /// The type-erased value.
-    let value : Any
+    let base : Any
 
     private let compare : (AnyEquatable) -> Bool
 
     /// Creates a type-erased equatable wrapper around the given value.
     init<Value:Equatable>(_ typedValue : Value) {
 
-        self.value = typedValue
+        self.base = typedValue
 
         self.compare = { other in
-            guard let otherValue = other.value as? Value else {
+            guard let otherValue = other.base as? Value else {
                 return false
             }
 

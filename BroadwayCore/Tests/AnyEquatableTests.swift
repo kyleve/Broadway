@@ -10,13 +10,13 @@ struct AnyEquatableTests {
     @Test("Stores the wrapped value")
     func storesValue() {
         let wrapped = AnyEquatable(42)
-        #expect(wrapped.value as? Int == 42)
+        #expect(wrapped.base as? Int == 42)
     }
 
     @Test("Stores a string value")
     func storesString() {
         let wrapped = AnyEquatable("hello")
-        #expect(wrapped.value as? String == "hello")
+        #expect(wrapped.base as? String == "hello")
     }
 
     // MARK: - Equality (Same Type)

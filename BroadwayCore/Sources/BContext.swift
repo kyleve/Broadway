@@ -10,7 +10,11 @@ import Foundation
 
 public struct BContext {
     
-    public var traits : BTraits
+    public var traits : BTraits {
+        didSet {
+            stylesheets.clear()
+        }
+    }
     
-    public var stylesheets : BStylesheets
+    @CopyOnWrite public var stylesheets : BStylesheets
 }
