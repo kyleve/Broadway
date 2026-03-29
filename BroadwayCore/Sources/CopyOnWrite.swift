@@ -86,12 +86,21 @@ public struct CopyOnWrite<Value> {
 
 
 extension CopyOnWrite : Equatable where Value:Equatable {}
+extension CopyOnWrite : Hashable where Value:Hashable {}
 
 
 extension CopyOnWrite.Box : Equatable where Value:Equatable {
 
     static func == (lhs:CopyOnWrite.Box, rhs:CopyOnWrite.Box) -> Bool {
         lhs === rhs || lhs.value == rhs.value
+    }
+
+}
+
+extension CopyOnWrite.Box : Hashable where Value:Hashable {
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(value)
     }
 
 }

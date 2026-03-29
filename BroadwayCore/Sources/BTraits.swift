@@ -16,6 +16,7 @@ extension BTraits {
     }
 }
 
+
 extension BAccessibility : BTraitsValue {
     
     public static var defaultValue: Self {
@@ -23,11 +24,12 @@ extension BAccessibility : BTraitsValue {
     }
 }
 
+
 public struct BTraits : Equatable, Hashable {
     
     public subscript<Value:BTraitsValue>(_ value : Value.Type) -> Value {
         get {
-            let id = ObjectIdentifier(Value.self)
+            let id = TypeIdentifier(Value.self)
             
             guard let value = storage[id], let value = value.base as? Value else {
                 return Value.defaultValue
@@ -37,13 +39,13 @@ public struct BTraits : Equatable, Hashable {
         }
         
         set {
-            let id = ObjectIdentifier(Value.self)
+            let id = TypeIdentifier(Value.self)
             
             storage[id] = AnyHashable(newValue)
         }
     }
     
-    private var storage : [ObjectIdentifier:AnyHashable] = [:]
+    private var storage : [TypeIdentifier:AnyHashable] = [:]
 }
 
 

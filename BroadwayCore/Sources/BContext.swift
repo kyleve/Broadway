@@ -12,9 +12,15 @@ public struct BContext {
     
     public var traits : BTraits {
         didSet {
-            stylesheets.clear()
+            stylesheets.traits = traits
         }
     }
     
-    @CopyOnWrite public var stylesheets : BStylesheets
+    @CopyOnWrite public var themes : BThemes {
+        didSet {
+            stylesheets.themes = themes
+        }
+    }
+    
+    @CopyOnWrite public private(set) var stylesheets : BStylesheets
 }
