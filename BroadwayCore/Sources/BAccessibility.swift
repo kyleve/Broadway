@@ -172,12 +172,14 @@ extension BAccessibility {
 
             isObserving = false
 
-            NotificationCenter.default.removeObserver(self)
+            for name in Self.notifications {
+                NotificationCenter.default.removeObserver(self, name: name, object: nil)
+            }
 
             old = nil
         }
 
-        @objc private func accessibilityDidChange() {
+        @objc private func accessibilityDidChange(_ notification: Notification) {
             let new = BAccessibility.current()
 
             guard let old, old != new else { return }
