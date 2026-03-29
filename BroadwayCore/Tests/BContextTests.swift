@@ -28,16 +28,28 @@ private struct BaseStylesheet : BStylesheet {
 private struct DerivedStylesheet : BStylesheet {
     var baseColor : ColorTheme?
 
-    init(context: SlicingContext) {
-        self.baseColor = context.stylesheets[BaseStylesheet.self].color
+    init(context: SlicingContext) throws {
+        self.baseColor = try context.stylesheets[BaseStylesheet.self].color
     }
 }
 
 private struct LeafStylesheet : BStylesheet {
     var baseColor : ColorTheme?
 
-    init(context: SlicingContext) {
-        self.baseColor = context.stylesheets[DerivedStylesheet.self].baseColor
+    init(context: SlicingContext) throws {
+        self.baseColor = try context.stylesheets[DerivedStylesheet.self].baseColor
+    }
+}
+
+private struct CycleA : BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets[CycleB.self]
+    }
+}
+
+private struct CycleB : BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets[CycleA.self]
     }
 }
 
@@ -59,12 +71,12 @@ struct BContextStylesheetTests {
     // MARK: - Lazy Creation
 
     @Test("Accessing a stylesheet creates it lazily from context")
-    func lazyCreation() {
+    func lazyCreation() throws {
         var themes = BThemes()
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let sheet = context.stylesheets[TestStylesheet.self]
+        let sheet = try context.stylesheets[TestStylesheet.self]
 
         #expect(sheet.color == .dark)
     }
@@ -72,11 +84,11 @@ struct BContextStylesheetTests {
     // MARK: - Caching
 
     @Test("Accessing the same stylesheet twice returns an equal value")
-    func caching() {
+    func caching() throws {
         let context = makeContext()
 
-        let first = context.stylesheets[TestStylesheet.self]
-        let second = context.stylesheets[TestStylesheet.self]
+        let first = try context.stylesheets[TestStylesheet.self]
+        let second = try context.stylesheets[TestStylesheet.self]
 
         #expect(first == second)
     }
@@ -84,27 +96,27 @@ struct BContextStylesheetTests {
     // MARK: - Invalidation
 
     @Test("Changing themes produces a stylesheet with the new theme")
-    func themeInvalidation() {
+    func themeInvalidation() throws {
         var context = makeContext()
 
-        let before = context.stylesheets[TestStylesheet.self]
+        let before = try context.stylesheets[TestStylesheet.self]
         #expect(before.color == nil)
 
         context.themes[ColorTheme.self] = .dark
 
-        let after = context.stylesheets[TestStylesheet.self]
+        let after = try context.stylesheets[TestStylesheet.self]
         #expect(after.color == .dark)
     }
 
     @Test("Changing traits produces a fresh stylesheet")
-    func traitsInvalidation() {
+    func traitsInvalidation() throws {
         var context = makeContext()
 
-        let before = context.stylesheets[TestStylesheet.self]
+        let before = try context.stylesheets[TestStylesheet.self]
 
         context.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
 
-        let after = context.stylesheets[TestStylesheet.self]
+        let after = try context.stylesheets[TestStylesheet.self]
 
         // Both are default TestStylesheets (no theme set), so equal by value,
         // but the key changed so it was re-created rather than cache-hit.
@@ -114,37 +126,68 @@ struct BContextStylesheetTests {
     // MARK: - Stylesheet Dependencies
 
     @Test("A stylesheet can depend on another stylesheet")
-    func directDependency() {
+    func directDependency() throws {
         var themes = BThemes()
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let derived = context.stylesheets[DerivedStylesheet.self]
+        let derived = try context.stylesheets[DerivedStylesheet.self]
 
         #expect(derived.baseColor == .dark)
     }
 
     @Test("Transitive stylesheet dependencies resolve correctly")
-    func transitiveDependency() {
+    func transitiveDependency() throws {
         var themes = BThemes()
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let leaf = context.stylesheets[LeafStylesheet.self]
+        let leaf = try context.stylesheets[LeafStylesheet.self]
 
         #expect(leaf.baseColor == .dark)
     }
 
     @Test("Dependent stylesheet reflects theme changes")
-    func dependencyThemeInvalidation() {
+    func dependencyThemeInvalidation() throws {
         var context = makeContext()
 
-        let before = context.stylesheets[DerivedStylesheet.self]
+        let before = try context.stylesheets[DerivedStylesheet.self]
         #expect(before.baseColor == nil)
 
         context.themes[ColorTheme.self] = .dark
 
-        let after = context.stylesheets[DerivedStylesheet.self]
+        let after = try context.stylesheets[DerivedStylesheet.self]
         #expect(after.baseColor == .dark)
+    }
+
+    // MARK: - Cycle Detection
+
+    @Test("Circular stylesheet dependency throws CyclicDependencyError")
+    func cycleThrows() {
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
+
+        #expect(throws: CyclicDependencyError.self) {
+            _ = try stylesheets[CycleA.self]
+        }
+    }
+
+    @Test("CyclicDependencyError includes the dependency path")
+    func cyclePath() {
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
+
+        let error = #expect(throws: CyclicDependencyError.self) {
+            _ = try stylesheets[CycleA.self]
+        }
+
+        #expect(error?.path.first == "CycleA")
+        #expect(error?.path.last == "CycleA")
+        #expect(error?.path.count == 3)
+    }
+
+    @Test("CyclicDependencyError description shows the full cycle path")
+    func cycleDescription() {
+        let error = CyclicDependencyError(path: ["CycleA", "CycleB", "CycleA"])
+
+        #expect(error.description == "Stylesheet dependency cycle: CycleA → CycleB → CycleA")
     }
 }
