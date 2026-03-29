@@ -8,6 +8,11 @@
 import Foundation
 
 
+/// A snapshot of the device's current accessibility settings.
+///
+/// Each property mirrors a corresponding `UIAccessibility` class property.
+/// Use ``current()`` to read the live system state, or construct
+/// instances directly for testing and previews.
 public struct BAccessibility : Equatable, Hashable {
 
     // MARK: Assistive Technologies
@@ -99,6 +104,8 @@ import UIKit
 
 extension BAccessibility {
 
+    /// Returns a snapshot of the current device accessibility settings
+    /// by reading each `UIAccessibility` class property.
     public static func current() -> BAccessibility {
         BAccessibility(
             buttonShapesEnabled: UIAccessibility.buttonShapesEnabled,
@@ -128,12 +135,24 @@ extension BAccessibility {
 
 extension BAccessibility {
     
+    /// Creates an ``Observer`` that calls `onChange` whenever a system
+    /// accessibility setting changes.
+    ///
+    /// The observer is returned in a stopped state; call ``Observer/start()``
+    /// to begin receiving callbacks.
+    ///
+    /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
+    /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
     public static func observeChanges(
         _ onChange : @escaping (BAccessibility, BAccessibility) -> Void
     ) -> Observer {
         Observer(onChange: onChange)
     }
     
+    /// Observes system accessibility notification changes and reports diffs
+    /// via a callback. Manages its own `NotificationCenter` registrations;
+    /// call ``start()`` and ``stop()`` to control the observation lifecycle.
+    /// Automatically stops on deallocation.
     public final class Observer {
 
         private let onChange : (BAccessibility, BAccessibility) -> Void
@@ -151,6 +170,8 @@ extension BAccessibility {
             stop()
         }
 
+        /// Begins observing accessibility changes. Safe to call multiple times;
+        /// subsequent calls while already observing are no-ops.
         public func start() {
             guard !isObserving else { return }
 
@@ -167,6 +188,8 @@ extension BAccessibility {
             }
         }
 
+        /// Stops observing accessibility changes and removes all notification
+        /// registrations. Safe to call multiple times or before ``start()``.
         public func stop() {
             guard isObserving else { return }
 

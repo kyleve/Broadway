@@ -8,11 +8,15 @@
 import Foundation
 
 
+/// A wrapper around `ObjectIdentifier` that retains the original metatype
+/// for debug output. Equality and hashing are based solely on the
+/// `ObjectIdentifier`, so two `TypeIdentifier` values match iff they
+/// refer to the same type.
 struct TypeIdentifier : Equatable, Hashable, CustomDebugStringConvertible {
-    
+
     let identifier : ObjectIdentifier
     let type : Any.Type
-    
+
     init<T>(_ type: T.Type) {
         identifier = .init(type)
         self.type = type

@@ -29,7 +29,7 @@ private struct DerivedStylesheet : BStylesheet {
     var baseColor : ColorTheme?
 
     init(context: SlicingContext) throws {
-        self.baseColor = try context.stylesheets[BaseStylesheet.self].color
+        self.baseColor = try context.stylesheets.get(BaseStylesheet.self).color
     }
 }
 
@@ -37,19 +37,19 @@ private struct LeafStylesheet : BStylesheet {
     var baseColor : ColorTheme?
 
     init(context: SlicingContext) throws {
-        self.baseColor = try context.stylesheets[DerivedStylesheet.self].baseColor
+        self.baseColor = try context.stylesheets.get(DerivedStylesheet.self).baseColor
     }
 }
 
 private struct CycleA : BStylesheet {
     init(context: SlicingContext) throws {
-        _ = try context.stylesheets[CycleB.self]
+        _ = try context.stylesheets.get(CycleB.self)
     }
 }
 
 private struct CycleB : BStylesheet {
     init(context: SlicingContext) throws {
-        _ = try context.stylesheets[CycleA.self]
+        _ = try context.stylesheets.get(CycleA.self)
     }
 }
 
@@ -76,7 +76,7 @@ struct BContextStylesheetTests {
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let sheet = try context.stylesheets[TestStylesheet.self]
+        let sheet = try context.stylesheets.get(TestStylesheet.self)
 
         #expect(sheet.color == .dark)
     }
@@ -87,8 +87,8 @@ struct BContextStylesheetTests {
     func caching() throws {
         let context = makeContext()
 
-        let first = try context.stylesheets[TestStylesheet.self]
-        let second = try context.stylesheets[TestStylesheet.self]
+        let first = try context.stylesheets.get(TestStylesheet.self)
+        let second = try context.stylesheets.get(TestStylesheet.self)
 
         #expect(first == second)
     }
@@ -99,12 +99,12 @@ struct BContextStylesheetTests {
     func themeInvalidation() throws {
         var context = makeContext()
 
-        let before = try context.stylesheets[TestStylesheet.self]
+        let before = try context.stylesheets.get(TestStylesheet.self)
         #expect(before.color == nil)
 
         context.themes[ColorTheme.self] = .dark
 
-        let after = try context.stylesheets[TestStylesheet.self]
+        let after = try context.stylesheets.get(TestStylesheet.self)
         #expect(after.color == .dark)
     }
 
@@ -112,11 +112,11 @@ struct BContextStylesheetTests {
     func traitsInvalidation() throws {
         var context = makeContext()
 
-        let before = try context.stylesheets[TestStylesheet.self]
+        let before = try context.stylesheets.get(TestStylesheet.self)
 
         context.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
 
-        let after = try context.stylesheets[TestStylesheet.self]
+        let after = try context.stylesheets.get(TestStylesheet.self)
 
         // Both are default TestStylesheets (no theme set), so equal by value,
         // but the key changed so it was re-created rather than cache-hit.
@@ -131,7 +131,7 @@ struct BContextStylesheetTests {
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let derived = try context.stylesheets[DerivedStylesheet.self]
+        let derived = try context.stylesheets.get(DerivedStylesheet.self)
 
         #expect(derived.baseColor == .dark)
     }
@@ -142,7 +142,7 @@ struct BContextStylesheetTests {
         themes[ColorTheme.self] = .dark
 
         let context = makeContext(themes: themes)
-        let leaf = try context.stylesheets[LeafStylesheet.self]
+        let leaf = try context.stylesheets.get(LeafStylesheet.self)
 
         #expect(leaf.baseColor == .dark)
     }
@@ -151,12 +151,12 @@ struct BContextStylesheetTests {
     func dependencyThemeInvalidation() throws {
         var context = makeContext()
 
-        let before = try context.stylesheets[DerivedStylesheet.self]
+        let before = try context.stylesheets.get(DerivedStylesheet.self)
         #expect(before.baseColor == nil)
 
         context.themes[ColorTheme.self] = .dark
 
-        let after = try context.stylesheets[DerivedStylesheet.self]
+        let after = try context.stylesheets.get(DerivedStylesheet.self)
         #expect(after.baseColor == .dark)
     }
 
@@ -167,7 +167,7 @@ struct BContextStylesheetTests {
         let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         #expect(throws: CyclicDependencyError.self) {
-            _ = try stylesheets[CycleA.self]
+            _ = try stylesheets.get(CycleA.self)
         }
     }
 
@@ -176,7 +176,7 @@ struct BContextStylesheetTests {
         let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         let error = #expect(throws: CyclicDependencyError.self) {
-            _ = try stylesheets[CycleA.self]
+            _ = try stylesheets.get(CycleA.self)
         }
 
         #expect(error?.path.first == "CycleA")
