@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 @testable import BroadwayCore
 
 
@@ -118,3 +119,109 @@ struct BAccessibilityTests {
         #expect(a.isVoiceOverRunning == false)
     }
 }
+
+
+#if canImport(UIKit)
+
+import UIKit
+
+@Suite("BAccessibility.Observer")
+struct BAccessibilityObserverTests {
+
+    // MARK: - Factory
+
+    @Test("observeChanges returns an Observer")
+    func observeChangesFactory() {
+        let observer = BAccessibility.observeChanges { _, _ in }
+        _ = observer
+    }
+
+    // MARK: - Lifecycle
+
+    @Test("start and stop complete without error")
+    func startStop() {
+        let observer = BAccessibility.Observer { _, _ in }
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Calling start twice is safe")
+    func doubleStart() {
+        let observer = BAccessibility.Observer { _, _ in }
+        observer.start()
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Calling stop without start is safe")
+    func stopWithoutStart() {
+        let observer = BAccessibility.Observer { _, _ in }
+        observer.stop()
+    }
+
+    @Test("Calling stop twice is safe")
+    func doubleStop() {
+        let observer = BAccessibility.Observer { _, _ in }
+        observer.start()
+        observer.stop()
+        observer.stop()
+    }
+
+    @Test("Can restart after stopping")
+    func restart() {
+        let observer = BAccessibility.Observer { _, _ in }
+        observer.start()
+        observer.stop()
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Deallocation after start does not crash")
+    func deallocAfterStart() {
+        var observer: BAccessibility.Observer? = BAccessibility.Observer { _, _ in }
+        observer!.start()
+        observer = nil
+        _ = observer
+    }
+
+    // MARK: - Notification Behavior
+
+    @Test("Does not fire onChange when accessibility state has not changed")
+    func noSpuriousCallback() {
+        var callCount = 0
+
+        let observer = BAccessibility.Observer { _, _ in
+            callCount += 1
+        }
+        observer.start()
+
+        NotificationCenter.default.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+
+        #expect(callCount == 0)
+
+        observer.stop()
+    }
+
+    @Test("Does not fire onChange after stop")
+    func noCallbackAfterStop() {
+        var callCount = 0
+
+        let observer = BAccessibility.Observer { _, _ in
+            callCount += 1
+        }
+        observer.start()
+        observer.stop()
+
+        NotificationCenter.default.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+
+        #expect(callCount == 0)
+    }
+}
+
+#endif
