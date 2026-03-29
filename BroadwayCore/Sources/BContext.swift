@@ -10,5 +10,7 @@ import Foundation
 
 public struct BContext {
     
+    public var traits : BTraits
     
+    public var stylesheets : BStylesheets
 }

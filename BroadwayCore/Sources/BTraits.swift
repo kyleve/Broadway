@@ -32,7 +32,6 @@ public struct BTraits : Equatable, Hashable {
 }
 
 
-
 public protocol BTraitsValue {
     
     associatedtype Value:Hashable
