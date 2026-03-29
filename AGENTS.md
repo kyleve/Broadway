@@ -41,8 +41,9 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 
 - **Tuist 4+** is used to generate the Xcode project from `Project.swift`.
 - Tuist is version-pinned via **mise** in `.mise.toml`. Run `mise install` to install the correct version.
-- Run `./ide` to generate the Xcode project (or `./ide -i` to run `tuist install` first).
-- Run `tuist test` to execute all tests.
+- Run `./ide` to generate the Xcode project (or `./ide -i` to run `mise exec -- tuist install` first).
+- Run `mise exec -- tuist test` to execute all tests.
+- Run `mise exec -- tuist test <SchemeName>` to test a specific target. The scheme name is the **framework name** (e.g., `BroadwayCore`), not the test target name (`BroadwayCoreTests`).
 - The generated `.xcodeproj` and `Derived/` directory are git-ignored.
 
 ## Targets
