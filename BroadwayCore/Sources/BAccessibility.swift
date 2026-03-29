@@ -48,47 +48,47 @@ public struct BAccessibility : Equatable, Hashable {
     // MARK: Initialization
 
     public init(
-        isVoiceOverRunning: Bool = false,
-        isSwitchControlRunning: Bool = false,
-        isAssistiveTouchRunning: Bool = false,
-        isGuidedAccessEnabled: Bool = false,
-        isBoldTextEnabled: Bool = false,
-        isGrayscaleEnabled: Bool = false,
-        isInvertColorsEnabled: Bool = false,
-        isDarkerSystemColorsEnabled: Bool = false,
-        isReduceTransparencyEnabled: Bool = false,
-        shouldDifferentiateWithoutColor: Bool = false,
-        isOnOffSwitchLabelsEnabled: Bool = false,
         buttonShapesEnabled: Bool = false,
-        isReduceMotionEnabled: Bool = false,
-        prefersCrossFadeTransitions: Bool = false,
-        isVideoAutoplayEnabled: Bool = false,
-        isMonoAudioEnabled: Bool = false,
+        isAssistiveTouchRunning: Bool = false,
+        isBoldTextEnabled: Bool = false,
         isClosedCaptioningEnabled: Bool = false,
+        isDarkerSystemColorsEnabled: Bool = false,
+        isGrayscaleEnabled: Bool = false,
+        isGuidedAccessEnabled: Bool = false,
+        isInvertColorsEnabled: Bool = false,
+        isMonoAudioEnabled: Bool = false,
+        isOnOffSwitchLabelsEnabled: Bool = false,
+        isReduceMotionEnabled: Bool = false,
+        isReduceTransparencyEnabled: Bool = false,
+        isShakeToUndoEnabled: Bool = false,
         isSpeakScreenEnabled: Bool = false,
         isSpeakSelectionEnabled: Bool = false,
-        isShakeToUndoEnabled: Bool = false
+        isSwitchControlRunning: Bool = false,
+        isVideoAutoplayEnabled: Bool = false,
+        isVoiceOverRunning: Bool = false,
+        prefersCrossFadeTransitions: Bool = false,
+        shouldDifferentiateWithoutColor: Bool = false
     ) {
-        self.isVoiceOverRunning = isVoiceOverRunning
-        self.isSwitchControlRunning = isSwitchControlRunning
-        self.isAssistiveTouchRunning = isAssistiveTouchRunning
-        self.isGuidedAccessEnabled = isGuidedAccessEnabled
-        self.isBoldTextEnabled = isBoldTextEnabled
-        self.isGrayscaleEnabled = isGrayscaleEnabled
-        self.isInvertColorsEnabled = isInvertColorsEnabled
-        self.isDarkerSystemColorsEnabled = isDarkerSystemColorsEnabled
-        self.isReduceTransparencyEnabled = isReduceTransparencyEnabled
-        self.shouldDifferentiateWithoutColor = shouldDifferentiateWithoutColor
-        self.isOnOffSwitchLabelsEnabled = isOnOffSwitchLabelsEnabled
         self.buttonShapesEnabled = buttonShapesEnabled
-        self.isReduceMotionEnabled = isReduceMotionEnabled
-        self.prefersCrossFadeTransitions = prefersCrossFadeTransitions
-        self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
-        self.isMonoAudioEnabled = isMonoAudioEnabled
+        self.isAssistiveTouchRunning = isAssistiveTouchRunning
+        self.isBoldTextEnabled = isBoldTextEnabled
         self.isClosedCaptioningEnabled = isClosedCaptioningEnabled
+        self.isDarkerSystemColorsEnabled = isDarkerSystemColorsEnabled
+        self.isGrayscaleEnabled = isGrayscaleEnabled
+        self.isGuidedAccessEnabled = isGuidedAccessEnabled
+        self.isInvertColorsEnabled = isInvertColorsEnabled
+        self.isMonoAudioEnabled = isMonoAudioEnabled
+        self.isOnOffSwitchLabelsEnabled = isOnOffSwitchLabelsEnabled
+        self.isReduceMotionEnabled = isReduceMotionEnabled
+        self.isReduceTransparencyEnabled = isReduceTransparencyEnabled
+        self.isShakeToUndoEnabled = isShakeToUndoEnabled
         self.isSpeakScreenEnabled = isSpeakScreenEnabled
         self.isSpeakSelectionEnabled = isSpeakSelectionEnabled
-        self.isShakeToUndoEnabled = isShakeToUndoEnabled
+        self.isSwitchControlRunning = isSwitchControlRunning
+        self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
+        self.isVoiceOverRunning = isVoiceOverRunning
+        self.prefersCrossFadeTransitions = prefersCrossFadeTransitions
+        self.shouldDifferentiateWithoutColor = shouldDifferentiateWithoutColor
     }
 }
 
@@ -101,27 +101,113 @@ extension BAccessibility {
 
     public static func current() -> BAccessibility {
         BAccessibility(
-            isVoiceOverRunning: UIAccessibility.isVoiceOverRunning,
-            isSwitchControlRunning: UIAccessibility.isSwitchControlRunning,
-            isAssistiveTouchRunning: UIAccessibility.isAssistiveTouchRunning,
-            isGuidedAccessEnabled: UIAccessibility.isGuidedAccessEnabled,
-            isBoldTextEnabled: UIAccessibility.isBoldTextEnabled,
-            isGrayscaleEnabled: UIAccessibility.isGrayscaleEnabled,
-            isInvertColorsEnabled: UIAccessibility.isInvertColorsEnabled,
-            isDarkerSystemColorsEnabled: UIAccessibility.isDarkerSystemColorsEnabled,
-            isReduceTransparencyEnabled: UIAccessibility.isReduceTransparencyEnabled,
-            shouldDifferentiateWithoutColor: UIAccessibility.shouldDifferentiateWithoutColor,
-            isOnOffSwitchLabelsEnabled: UIAccessibility.isOnOffSwitchLabelsEnabled,
             buttonShapesEnabled: UIAccessibility.buttonShapesEnabled,
-            isReduceMotionEnabled: UIAccessibility.isReduceMotionEnabled,
-            prefersCrossFadeTransitions: UIAccessibility.prefersCrossFadeTransitions,
-            isVideoAutoplayEnabled: UIAccessibility.isVideoAutoplayEnabled,
-            isMonoAudioEnabled: UIAccessibility.isMonoAudioEnabled,
+            isAssistiveTouchRunning: UIAccessibility.isAssistiveTouchRunning,
+            isBoldTextEnabled: UIAccessibility.isBoldTextEnabled,
             isClosedCaptioningEnabled: UIAccessibility.isClosedCaptioningEnabled,
+            isDarkerSystemColorsEnabled: UIAccessibility.isDarkerSystemColorsEnabled,
+            isGrayscaleEnabled: UIAccessibility.isGrayscaleEnabled,
+            isGuidedAccessEnabled: UIAccessibility.isGuidedAccessEnabled,
+            isInvertColorsEnabled: UIAccessibility.isInvertColorsEnabled,
+            isMonoAudioEnabled: UIAccessibility.isMonoAudioEnabled,
+            isOnOffSwitchLabelsEnabled: UIAccessibility.isOnOffSwitchLabelsEnabled,
+            isReduceMotionEnabled: UIAccessibility.isReduceMotionEnabled,
+            isReduceTransparencyEnabled: UIAccessibility.isReduceTransparencyEnabled,
+            isShakeToUndoEnabled: UIAccessibility.isShakeToUndoEnabled,
             isSpeakScreenEnabled: UIAccessibility.isSpeakScreenEnabled,
             isSpeakSelectionEnabled: UIAccessibility.isSpeakSelectionEnabled,
-            isShakeToUndoEnabled: UIAccessibility.isShakeToUndoEnabled
+            isSwitchControlRunning: UIAccessibility.isSwitchControlRunning,
+            isVideoAutoplayEnabled: UIAccessibility.isVideoAutoplayEnabled,
+            isVoiceOverRunning: UIAccessibility.isVoiceOverRunning,
+            prefersCrossFadeTransitions: UIAccessibility.prefersCrossFadeTransitions,
+            shouldDifferentiateWithoutColor: UIAccessibility.shouldDifferentiateWithoutColor
         )
+    }
+}
+
+
+extension BAccessibility {
+    
+    public static func observeChanges(
+        _ onChange : @escaping (BAccessibility, BAccessibility) -> Void
+    ) -> Observer {
+        Observer(onChange: onChange)
+    }
+    
+    public final class Observer {
+
+        private let onChange : (BAccessibility, BAccessibility) -> Void
+
+        private var old : BAccessibility?
+
+        private var isObserving : Bool = false
+
+        public init(onChange: @escaping (BAccessibility, BAccessibility) -> Void) {
+            self.onChange = onChange
+            self.old = nil
+        }
+
+        deinit {
+            stop()
+        }
+
+        public func start() {
+            guard !isObserving else { return }
+
+            isObserving = true
+            old = .current()
+
+            for name in Self.notifications {
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(accessibilityDidChange),
+                    name: name,
+                    object: nil
+                )
+            }
+        }
+
+        public func stop() {
+            guard isObserving else { return }
+
+            isObserving = false
+
+            NotificationCenter.default.removeObserver(self)
+
+            old = nil
+        }
+
+        @objc private func accessibilityDidChange() {
+            let new = BAccessibility.current()
+
+            guard let old, old != new else { return }
+
+            self.old = new
+            onChange(old, new)
+        }
+
+        private static let notifications : [Notification.Name] = [
+            UIAccessibility.assistiveTouchStatusDidChangeNotification,
+            UIAccessibility.boldTextStatusDidChangeNotification,
+            UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,
+            UIAccessibility.closedCaptioningStatusDidChangeNotification,
+            UIAccessibility.darkerSystemColorsStatusDidChangeNotification,
+            UIAccessibility.differentiateWithoutColorDidChangeNotification,
+            UIAccessibility.grayscaleStatusDidChangeNotification,
+            UIAccessibility.guidedAccessStatusDidChangeNotification,
+            UIAccessibility.invertColorsStatusDidChangeNotification,
+            UIAccessibility.monoAudioStatusDidChangeNotification,
+            UIAccessibility.onOffSwitchLabelsDidChangeNotification,
+            UIAccessibility.prefersCrossFadeTransitionsStatusDidChange,
+            UIAccessibility.reduceMotionStatusDidChangeNotification,
+            UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+            UIAccessibility.shakeToUndoDidChangeNotification,
+            UIAccessibility.speakScreenStatusDidChangeNotification,
+            UIAccessibility.speakSelectionStatusDidChangeNotification,
+            UIAccessibility.switchControlStatusDidChangeNotification,
+            UIAccessibility.videoAutoplayStatusDidChangeNotification,
+            UIAccessibility.voiceOverStatusDidChangeNotification,
+        ]
     }
 }
 
