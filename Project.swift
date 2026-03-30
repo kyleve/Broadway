@@ -6,9 +6,15 @@ let deployment: DeploymentTargets = .iOS("26.0")
 func framework(
     _ name: String,
     bundleIdSuffix: String,
-    dependencies: [TargetDependency] = []
+    dependencies: [TargetDependency] = [],
+    testHost: String? = nil
 ) -> [Target] {
-    [
+    var testDependencies: [TargetDependency] = [.target(name: name)]
+    if let testHost {
+        testDependencies.append(.target(name: testHost))
+    }
+
+    return [
         .target(
             name: name,
             destinations: destinations,
@@ -25,7 +31,7 @@ func framework(
             bundleId: "com.broadway.\(bundleIdSuffix).tests",
             deploymentTargets: deployment,
             sources: ["\(name)/Tests/**"],
-            dependencies: [.target(name: name)]
+            dependencies: testDependencies
         ),
     ]
 }
@@ -61,6 +67,6 @@ let project = Project(
             dependencies: [.target(name: "BroadwayCatalog")]
         ),
     ]
-    + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")])
+    + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")], testHost: "BroadwayCatalog")
     + framework("BroadwayCore", bundleIdSuffix: "core")
 )

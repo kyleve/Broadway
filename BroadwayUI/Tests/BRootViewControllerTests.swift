@@ -8,7 +8,7 @@ import BroadwayCore
 
 
 @Suite("BRootViewController")
-struct BRootViewControllerTests {
+@MainActor struct BRootViewControllerTests {
 
     // MARK: - Initialization
 
