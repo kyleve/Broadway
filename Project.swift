@@ -77,9 +77,7 @@ let project = Project(
                 "UILaunchScreen": .dictionary([:]),
             ]),
             sources: ["BroadwayTestHost/Sources/**"],
-            dependencies: [
-                .target(name: "BroadwayUI"),
-            ],
+            dependencies: [],
         ),
         .target(
             name: "BroadwayTesting",
