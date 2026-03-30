@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+git config core.hooksPath .githooks
+
 INSTALL=false
 
 for arg in "$@"; do

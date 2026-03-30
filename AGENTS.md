@@ -10,7 +10,9 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 
 ```
 /
-├── .mise.toml                          # mise tool versions (pins Tuist)
+├── .githooks/pre-commit                # Git pre-commit hook (SwiftFormat lint)
+├── .mise.toml                          # mise tool versions (pins Tuist, SwiftFormat)
+├── .swiftformat                        # SwiftFormat configuration
 ├── Tuist.swift                         # Tuist global configuration
 ├── Project.swift                       # Tuist project manifest (root level)
 ├── BroadwayCatalog/
@@ -31,7 +33,8 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │   └── Tests/                          # Core framework unit tests (Swift Testing)
 │       └── BroadwayCoreTests.swift
 ├── Plans/                              # Archived implementation plans (see index below)
-├── ide                                 # Dev script (runs tuist generate, optionally tuist install)
+├── swiftformat                         # Run SwiftFormat (--lint to check only)
+├── ide                                 # Dev script (installs hooks, runs tuist generate)
 ├── LICENSE                             # Apache 2.0
 ├── README.md                           # Project overview and setup instructions
 └── AGENTS.md                           # This file
@@ -40,11 +43,19 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 ## Build System
 
 - **Tuist 4+** is used to generate the Xcode project from `Project.swift`.
-- Tuist is version-pinned via **mise** in `.mise.toml`. Run `mise install` to install the correct version.
+- Tuist and SwiftFormat are version-pinned via **mise** in `.mise.toml`. Run `mise install` to install them.
 - Run `./ide` to generate the Xcode project (or `./ide -i` to run `mise exec -- tuist install` first).
 - Run `mise exec -- tuist test` to execute all tests.
 - Run `mise exec -- tuist test <SchemeName>` to test a specific target. The scheme name is the **framework name** (e.g., `BroadwayCore`), not the test target name (`BroadwayCoreTests`).
 - The generated `.xcodeproj` and `Derived/` directory are git-ignored.
+
+## Formatting
+
+- **SwiftFormat** enforces consistent code style. Configuration lives in `.swiftformat`.
+- Run `./swiftformat` to format all Swift files in-place.
+- Run `./swiftformat --lint` to check without modifying (used in CI and pre-commit).
+- The `./ide` script configures `core.hooksPath` to `.githooks/`, which installs a pre-commit hook that lints staged `.swift` files.
+- CI runs `./swiftformat --lint` as a gate before build & test.
 
 ## Targets
 

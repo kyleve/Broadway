@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.swift')
+
+if [ -z "$staged" ]; then
+    exit 0
+fi
+
+mise exec -- swiftformat --lint $staged
