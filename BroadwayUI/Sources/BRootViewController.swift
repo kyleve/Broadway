@@ -32,41 +32,39 @@ public final class BRootViewController : UIViewController {
 
     /// The current context. Updated automatically when accessibility
     /// settings change. Read this to inspect the live state.
-    public private(set) var context : BContext
-
-    /// The active theme values. Setting this updates the context and
-    /// re-propagates the trait to all descendants.
-    public var themes : BThemes {
-        get { context.themes }
-        set {
-            context.themes = newValue
-            setNeedsContextTraitUpdate()
+    public private(set) var context : BContext {
+        didSet {
+            traitOverrides.bContext = context
         }
     }
 
     // MARK: Initialization
 
     /// Creates a root container that embeds the given child view controller.
-    ///
-    /// - Parameters:
-    ///   - themes: Initial theme values. Defaults to an empty set.
-    ///   - child: The view controller to embed as the single child.
-    public init(themes : BThemes = .init(), child : UIViewController) {
-        self.context = BContext(themes: themes)
+    public init(child : UIViewController) {
+        self.context = BContext()
         self.child = child
+
         super.init(nibName: nil, bundle: nil)
+
+        addChild(child)
+        child.didMove(toParent: self)
+
+        context.traits.accessibility = .current()
+        traitOverrides.bContext = context
+
+        accessibilityObserver = BAccessibility.observeChanges { [weak self] _, new in
+            guard let self else { return }
+            self.context.traits.accessibility = new
+        }
+        accessibilityObserver?.start()
     }
 
     /// Creates a root container that hosts SwiftUI content.
-    ///
-    /// - Parameters:
-    ///   - themes: Initial theme values. Defaults to an empty set.
-    ///   - content: A SwiftUI view builder providing the root content.
     public convenience init<Content : View>(
-        themes : BThemes = .init(),
         @ViewBuilder content : () -> Content
     ) {
-        self.init(themes: themes, child: UIHostingController(rootView: content()))
+        self.init(child: UIHostingController(rootView: content()))
     }
 
     @available(*, unavailable)
@@ -77,22 +75,13 @@ public final class BRootViewController : UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        addChild(child)
-        child.view.frame = view.bounds
-        child.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(child.view)
-        child.didMove(toParent: self)
+    }
 
-        context.traits.accessibility = .current()
+    public override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
 
-        accessibilityObserver = BAccessibility.observeChanges { [weak self] _, new in
-            guard let self else { return }
-            self.context.traits.accessibility = new
-            self.setNeedsContextTraitUpdate()
-        }
-        accessibilityObserver?.start()
-
-        updateContextTraitIfNeeded()
+        child.view.frame = view.bounds
     }
 
     // MARK: Private
@@ -100,24 +89,6 @@ public final class BRootViewController : UIViewController {
     private let child : UIViewController
 
     private var accessibilityObserver : BAccessibility.Observer?
-
-    private var needsContextTraitUpdate : Bool = true
-
-    private func setNeedsContextTraitUpdate() {
-        guard !needsContextTraitUpdate else { return }
-        needsContextTraitUpdate = true
-
-        RunLoop.main.perform { [weak self] in
-            self?.updateContextTraitIfNeeded()
-        }
-    }
-
-    private func updateContextTraitIfNeeded() {
-        guard needsContextTraitUpdate else { return }
-        needsContextTraitUpdate = false
-
-        traitOverrides.bContext = context
-    }
 }
 
 #endif

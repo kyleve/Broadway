@@ -94,11 +94,11 @@ public struct BStylesheets : Equatable {
             }
 
             _creating._unsafeUnderlyingValue.append(id)
+            defer { _creating._unsafeUnderlyingValue.removeLast() }
 
             let context = SlicingContext(themes: themes, stylesheets: self)
             let new = try Stylesheet(context: context)
 
-            _creating._unsafeUnderlyingValue.removeLast()
             _cache._unsafeUnderlyingValue[key] = AnyEquatable(new)
 
             return new
