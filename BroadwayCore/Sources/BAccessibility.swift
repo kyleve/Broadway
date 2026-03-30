@@ -99,10 +99,10 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
 
     import UIKit
 
-    public extension BAccessibility {
+    extension BAccessibility {
         /// Returns a snapshot of the current device accessibility settings
         /// by reading each `UIAccessibility` class property.
-        static func current() -> BAccessibility {
+        public static func current() -> BAccessibility {
             BAccessibility(
                 buttonShapesEnabled: UIAccessibility.buttonShapesEnabled,
                 isAssistiveTouchRunning: UIAccessibility.isAssistiveTouchRunning,
@@ -128,7 +128,7 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
         }
     }
 
-    public extension BAccessibility {
+    extension BAccessibility {
         /// Keeps a ``BContext``'s accessibility traits in sync with the device
         /// by delivering change notifications as `(old, new)` pairs.
         ///
@@ -137,33 +137,33 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
         ///
         /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
         /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
-        @MainActor static func observeChanges(
+        @MainActor public static func observeChanges(
+            notificationCenter: NotificationCenter = .default,
             _ onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void,
         ) -> Observer {
-            Observer(onChange: onChange)
+            Observer(notificationCenter: notificationCenter, onChange: onChange)
         }
 
         /// Manages `NotificationCenter` registrations for system accessibility
         /// changes and reports diffs via a callback.
         /// Call ``start()`` and ``stop()`` to control the observation lifecycle.
-        /// Automatically unregisters on deallocation.
         @MainActor
-        final class Observer {
+        public final class Observer {
             private let onChange: @MainActor @Sendable (BAccessibility, BAccessibility) -> Void
+
+            private let notificationCenter: NotificationCenter
 
             private var old: BAccessibility?
 
             private var isObserving: Bool = false
 
-            public init(onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void) {
+            public init(
+                notificationCenter: NotificationCenter = .default,
+                onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void,
+            ) {
+                self.notificationCenter = notificationCenter
                 self.onChange = onChange
                 old = nil
-            }
-
-            deinit {
-                for name in Self.notifications {
-                    NotificationCenter.default.removeObserver(self, name: name, object: nil)
-                }
             }
 
             /// Begins observing accessibility changes. Safe to call multiple times;
@@ -175,7 +175,7 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
                 old = .current()
 
                 for name in Self.notifications {
-                    NotificationCenter.default.addObserver(
+                    notificationCenter.addObserver(
                         self,
                         selector: #selector(accessibilityDidChange(_:)),
                         name: name,
@@ -192,7 +192,7 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
                 isObserving = false
 
                 for name in Self.notifications {
-                    NotificationCenter.default.removeObserver(self, name: name, object: nil)
+                    notificationCenter.removeObserver(self, name: name, object: nil)
                 }
 
                 old = nil
@@ -207,7 +207,7 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
                 onChange(old, new)
             }
 
-            private static let notifications: [Notification.Name] = [
+            static let notifications: [Notification.Name] = [
                 UIAccessibility.assistiveTouchStatusDidChangeNotification,
                 UIAccessibility.boldTextStatusDidChangeNotification,
                 UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,

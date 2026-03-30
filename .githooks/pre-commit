@@ -5,8 +5,12 @@ set -euo pipefail
 # Note: this formats working-tree content, not the staged blob.
 # Partially-staged files will be fully re-staged after formatting.
 
-git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
-  | xargs -0 --no-run-if-empty mise exec -- swiftformat
+staged=$(git diff --cached --name-only --diff-filter=ACMR -- '*.swift')
 
-git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
-  | xargs -0 --no-run-if-empty git add
+if [ -n "$staged" ]; then
+    git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
+      | xargs -0 mise exec -- swiftformat
+
+    git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
+      | xargs -0 git add
+fi

@@ -7,8 +7,8 @@
 
 import Foundation
 
-public extension BTraits {
-    var accessibility: BAccessibility {
+extension BTraits {
+    public var accessibility: BAccessibility {
         get { self[BAccessibility.self] }
         set { self[BAccessibility.self] = newValue }
     }
