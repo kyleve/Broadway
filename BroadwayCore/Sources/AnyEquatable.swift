@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 /// A type-erased wrapper around any `Equatable` value.
 ///
 /// `AnyEquatable` stores an `Equatable` value and its comparison closure,
@@ -23,19 +22,17 @@ import Foundation
 /// a == b  // true  — same type, same value
 /// a == c  // false — different types
 /// ```
-struct AnyEquatable : Equatable {
-
+struct AnyEquatable: Equatable {
     /// The type-erased value.
-    let base : Any
+    let base: Any
 
-    private let compare : (AnyEquatable) -> Bool
+    private let compare: (AnyEquatable) -> Bool
 
     /// Creates a type-erased equatable wrapper around the given value.
-    init<Value:Equatable>(_ typedValue : Value) {
+    init<Value: Equatable>(_ typedValue: Value) {
+        base = typedValue
 
-        self.base = typedValue
-
-        self.compare = { other in
+        compare = { other in
             guard let otherValue = other.base as? Value else {
                 return false
             }
@@ -44,7 +41,7 @@ struct AnyEquatable : Equatable {
         }
     }
 
-    static func == (lhs:AnyEquatable, rhs:AnyEquatable) -> Bool {
+    static func == (lhs: AnyEquatable, rhs: AnyEquatable) -> Bool {
         lhs.compare(rhs)
     }
 }

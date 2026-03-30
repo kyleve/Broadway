@@ -7,14 +7,12 @@
 
 import Foundation
 
-
 /// A snapshot of the device's current accessibility settings.
 ///
 /// Each property mirrors a corresponding `UIAccessibility` class property.
 /// Use ``current()`` to read the live system state, or construct
 /// instances directly for testing and previews.
-public struct BAccessibility : Equatable, Hashable {
-
+public struct BAccessibility: Equatable, Hashable {
     // MARK: Assistive Technologies
 
     public var isVoiceOverRunning: Bool
@@ -72,7 +70,7 @@ public struct BAccessibility : Equatable, Hashable {
         isVideoAutoplayEnabled: Bool = false,
         isVoiceOverRunning: Bool = false,
         prefersCrossFadeTransitions: Bool = false,
-        shouldDifferentiateWithoutColor: Bool = false
+        shouldDifferentiateWithoutColor: Bool = false,
     ) {
         self.buttonShapesEnabled = buttonShapesEnabled
         self.isAssistiveTouchRunning = isAssistiveTouchRunning
@@ -97,143 +95,138 @@ public struct BAccessibility : Equatable, Hashable {
     }
 }
 
-
 #if canImport(UIKit)
 
-import UIKit
+    import UIKit
 
-extension BAccessibility {
-
-    /// Returns a snapshot of the current device accessibility settings
-    /// by reading each `UIAccessibility` class property.
-    public static func current() -> BAccessibility {
-        BAccessibility(
-            buttonShapesEnabled: UIAccessibility.buttonShapesEnabled,
-            isAssistiveTouchRunning: UIAccessibility.isAssistiveTouchRunning,
-            isBoldTextEnabled: UIAccessibility.isBoldTextEnabled,
-            isClosedCaptioningEnabled: UIAccessibility.isClosedCaptioningEnabled,
-            isDarkerSystemColorsEnabled: UIAccessibility.isDarkerSystemColorsEnabled,
-            isGrayscaleEnabled: UIAccessibility.isGrayscaleEnabled,
-            isGuidedAccessEnabled: UIAccessibility.isGuidedAccessEnabled,
-            isInvertColorsEnabled: UIAccessibility.isInvertColorsEnabled,
-            isMonoAudioEnabled: UIAccessibility.isMonoAudioEnabled,
-            isOnOffSwitchLabelsEnabled: UIAccessibility.isOnOffSwitchLabelsEnabled,
-            isReduceMotionEnabled: UIAccessibility.isReduceMotionEnabled,
-            isReduceTransparencyEnabled: UIAccessibility.isReduceTransparencyEnabled,
-            isShakeToUndoEnabled: UIAccessibility.isShakeToUndoEnabled,
-            isSpeakScreenEnabled: UIAccessibility.isSpeakScreenEnabled,
-            isSpeakSelectionEnabled: UIAccessibility.isSpeakSelectionEnabled,
-            isSwitchControlRunning: UIAccessibility.isSwitchControlRunning,
-            isVideoAutoplayEnabled: UIAccessibility.isVideoAutoplayEnabled,
-            isVoiceOverRunning: UIAccessibility.isVoiceOverRunning,
-            prefersCrossFadeTransitions: UIAccessibility.prefersCrossFadeTransitions,
-            shouldDifferentiateWithoutColor: UIAccessibility.shouldDifferentiateWithoutColor
-        )
+    public extension BAccessibility {
+        /// Returns a snapshot of the current device accessibility settings
+        /// by reading each `UIAccessibility` class property.
+        static func current() -> BAccessibility {
+            BAccessibility(
+                buttonShapesEnabled: UIAccessibility.buttonShapesEnabled,
+                isAssistiveTouchRunning: UIAccessibility.isAssistiveTouchRunning,
+                isBoldTextEnabled: UIAccessibility.isBoldTextEnabled,
+                isClosedCaptioningEnabled: UIAccessibility.isClosedCaptioningEnabled,
+                isDarkerSystemColorsEnabled: UIAccessibility.isDarkerSystemColorsEnabled,
+                isGrayscaleEnabled: UIAccessibility.isGrayscaleEnabled,
+                isGuidedAccessEnabled: UIAccessibility.isGuidedAccessEnabled,
+                isInvertColorsEnabled: UIAccessibility.isInvertColorsEnabled,
+                isMonoAudioEnabled: UIAccessibility.isMonoAudioEnabled,
+                isOnOffSwitchLabelsEnabled: UIAccessibility.isOnOffSwitchLabelsEnabled,
+                isReduceMotionEnabled: UIAccessibility.isReduceMotionEnabled,
+                isReduceTransparencyEnabled: UIAccessibility.isReduceTransparencyEnabled,
+                isShakeToUndoEnabled: UIAccessibility.isShakeToUndoEnabled,
+                isSpeakScreenEnabled: UIAccessibility.isSpeakScreenEnabled,
+                isSpeakSelectionEnabled: UIAccessibility.isSpeakSelectionEnabled,
+                isSwitchControlRunning: UIAccessibility.isSwitchControlRunning,
+                isVideoAutoplayEnabled: UIAccessibility.isVideoAutoplayEnabled,
+                isVoiceOverRunning: UIAccessibility.isVoiceOverRunning,
+                prefersCrossFadeTransitions: UIAccessibility.prefersCrossFadeTransitions,
+                shouldDifferentiateWithoutColor: UIAccessibility.shouldDifferentiateWithoutColor,
+            )
+        }
     }
-}
 
-
-extension BAccessibility {
-    
-    /// Creates an ``Observer`` that calls `onChange` whenever a system
-    /// accessibility setting changes.
-    ///
-    /// The observer is returned in a stopped state; call ``Observer/start()``
-    /// to begin receiving callbacks.
-    ///
-    /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
-    /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
-    public static func observeChanges(
-        _ onChange : @escaping (BAccessibility, BAccessibility) -> Void
-    ) -> Observer {
-        Observer(onChange: onChange)
-    }
-    
-    /// Observes system accessibility notification changes and reports diffs
-    /// via a callback. Manages its own `NotificationCenter` registrations;
-    /// call ``start()`` and ``stop()`` to control the observation lifecycle.
-    /// Automatically stops on deallocation.
-    public final class Observer {
-
-        private let onChange : (BAccessibility, BAccessibility) -> Void
-
-        private var old : BAccessibility?
-
-        private var isObserving : Bool = false
-
-        public init(onChange: @escaping (BAccessibility, BAccessibility) -> Void) {
-            self.onChange = onChange
-            self.old = nil
+    public extension BAccessibility {
+        /// Creates an ``Observer`` that calls `onChange` whenever a system
+        /// accessibility setting changes.
+        ///
+        /// The observer is returned in a stopped state; call ``Observer/start()``
+        /// to begin receiving callbacks.
+        ///
+        /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
+        /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
+        static func observeChanges(
+            _ onChange: @escaping (BAccessibility, BAccessibility) -> Void,
+        ) -> Observer {
+            Observer(onChange: onChange)
         }
 
-        deinit {
-            stop()
-        }
+        /// Observes system accessibility notification changes and reports diffs
+        /// via a callback. Manages its own `NotificationCenter` registrations;
+        /// call ``start()`` and ``stop()`` to control the observation lifecycle.
+        /// Automatically stops on deallocation.
+        final class Observer {
+            private let onChange: (BAccessibility, BAccessibility) -> Void
 
-        /// Begins observing accessibility changes. Safe to call multiple times;
-        /// subsequent calls while already observing are no-ops.
-        public func start() {
-            guard !isObserving else { return }
+            private var old: BAccessibility?
 
-            isObserving = true
-            old = .current()
+            private var isObserving: Bool = false
 
-            for name in Self.notifications {
-                NotificationCenter.default.addObserver(
-                    self,
-                    selector: #selector(accessibilityDidChange),
-                    name: name,
-                    object: nil
-                )
-            }
-        }
-
-        /// Stops observing accessibility changes and removes all notification
-        /// registrations. Safe to call multiple times or before ``start()``.
-        public func stop() {
-            guard isObserving else { return }
-
-            isObserving = false
-
-            for name in Self.notifications {
-                NotificationCenter.default.removeObserver(self, name: name, object: nil)
+            public init(onChange: @escaping (BAccessibility, BAccessibility) -> Void) {
+                self.onChange = onChange
+                old = nil
             }
 
-            old = nil
+            deinit {
+                stop()
+            }
+
+            /// Begins observing accessibility changes. Safe to call multiple times;
+            /// subsequent calls while already observing are no-ops.
+            public func start() {
+                guard !isObserving else { return }
+
+                isObserving = true
+                old = .current()
+
+                for name in Self.notifications {
+                    NotificationCenter.default.addObserver(
+                        self,
+                        selector: #selector(accessibilityDidChange),
+                        name: name,
+                        object: nil,
+                    )
+                }
+            }
+
+            /// Stops observing accessibility changes and removes all notification
+            /// registrations. Safe to call multiple times or before ``start()``.
+            public func stop() {
+                guard isObserving else { return }
+
+                isObserving = false
+
+                for name in Self.notifications {
+                    NotificationCenter.default.removeObserver(self, name: name, object: nil)
+                }
+
+                old = nil
+            }
+
+            @objc private func accessibilityDidChange(_: Notification) {
+                let new = BAccessibility.current()
+
+                guard let old, old != new else { return }
+
+                self.old = new
+                onChange(old, new)
+            }
+
+            private static let notifications: [Notification.Name] = [
+                UIAccessibility.assistiveTouchStatusDidChangeNotification,
+                UIAccessibility.boldTextStatusDidChangeNotification,
+                UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,
+                UIAccessibility.closedCaptioningStatusDidChangeNotification,
+                UIAccessibility.darkerSystemColorsStatusDidChangeNotification,
+                UIAccessibility.differentiateWithoutColorDidChangeNotification,
+                UIAccessibility.grayscaleStatusDidChangeNotification,
+                UIAccessibility.guidedAccessStatusDidChangeNotification,
+                UIAccessibility.invertColorsStatusDidChangeNotification,
+                UIAccessibility.monoAudioStatusDidChangeNotification,
+                UIAccessibility.onOffSwitchLabelsDidChangeNotification,
+                UIAccessibility.prefersCrossFadeTransitionsStatusDidChange,
+                UIAccessibility.reduceMotionStatusDidChangeNotification,
+                UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+                UIAccessibility.shakeToUndoDidChangeNotification,
+                UIAccessibility.speakScreenStatusDidChangeNotification,
+                UIAccessibility.speakSelectionStatusDidChangeNotification,
+                UIAccessibility.switchControlStatusDidChangeNotification,
+                UIAccessibility.videoAutoplayStatusDidChangeNotification,
+                UIAccessibility.voiceOverStatusDidChangeNotification,
+            ]
         }
-
-        @objc private func accessibilityDidChange(_ notification: Notification) {
-            let new = BAccessibility.current()
-
-            guard let old, old != new else { return }
-
-            self.old = new
-            onChange(old, new)
-        }
-
-        private static let notifications : [Notification.Name] = [
-            UIAccessibility.assistiveTouchStatusDidChangeNotification,
-            UIAccessibility.boldTextStatusDidChangeNotification,
-            UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,
-            UIAccessibility.closedCaptioningStatusDidChangeNotification,
-            UIAccessibility.darkerSystemColorsStatusDidChangeNotification,
-            UIAccessibility.differentiateWithoutColorDidChangeNotification,
-            UIAccessibility.grayscaleStatusDidChangeNotification,
-            UIAccessibility.guidedAccessStatusDidChangeNotification,
-            UIAccessibility.invertColorsStatusDidChangeNotification,
-            UIAccessibility.monoAudioStatusDidChangeNotification,
-            UIAccessibility.onOffSwitchLabelsDidChangeNotification,
-            UIAccessibility.prefersCrossFadeTransitionsStatusDidChange,
-            UIAccessibility.reduceMotionStatusDidChangeNotification,
-            UIAccessibility.reduceTransparencyStatusDidChangeNotification,
-            UIAccessibility.shakeToUndoDidChangeNotification,
-            UIAccessibility.speakScreenStatusDidChangeNotification,
-            UIAccessibility.speakSelectionStatusDidChangeNotification,
-            UIAccessibility.switchControlStatusDidChangeNotification,
-            UIAccessibility.videoAutoplayStatusDidChangeNotification,
-            UIAccessibility.voiceOverStatusDidChangeNotification,
-        ]
     }
-}
 
 #endif

@@ -1,10 +1,7 @@
-import Testing
 @testable import BroadwayCore
+import Testing
 
-
-@Suite("AnyEquatable")
 struct AnyEquatableTests {
-
     // MARK: - Initialization
 
     @Test("Stores the wrapped value")
@@ -89,9 +86,9 @@ struct AnyEquatableTests {
 
     @Test("Works with optionals")
     func optionalValues() {
-        let a = AnyEquatable(Optional<Int>.none)
-        let b = AnyEquatable(Optional<Int>.none)
-        let c = AnyEquatable(Optional<Int>.some(42))
+        let a = AnyEquatable(Int?.none)
+        let b = AnyEquatable(Int?.none)
+        let c = AnyEquatable(Int?.some(42))
         #expect(a == b)
         #expect(a != c)
     }

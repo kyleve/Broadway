@@ -1,65 +1,63 @@
-import Testing
 @testable import BroadwayCore
-
+import Testing
 
 // MARK: - Test Fixtures
 
-private enum ColorTheme : String, BTheme {
+private enum ColorTheme: String, BTheme {
     case light, dark
-    static var defaultValue: Self { .light }
+    static var defaultValue: Self {
+        .light
+    }
 }
 
-private struct TestStylesheet : BStylesheet {
-    var color : ColorTheme?
+private struct TestStylesheet: BStylesheet {
+    var color: ColorTheme?
 
     init(context: SlicingContext) {
-        self.color = context.themes[ColorTheme.self]
+        color = context.themes[ColorTheme.self]
     }
 }
 
-private struct BaseStylesheet : BStylesheet {
-    var color : ColorTheme?
+private struct BaseStylesheet: BStylesheet {
+    var color: ColorTheme?
 
     init(context: SlicingContext) {
-        self.color = context.themes[ColorTheme.self]
+        color = context.themes[ColorTheme.self]
     }
 }
 
-private struct DerivedStylesheet : BStylesheet {
-    var baseColor : ColorTheme?
+private struct DerivedStylesheet: BStylesheet {
+    var baseColor: ColorTheme?
 
     init(context: SlicingContext) throws {
-        self.baseColor = try context.stylesheets.get(BaseStylesheet.self).color
+        baseColor = try context.stylesheets.get(BaseStylesheet.self).color
     }
 }
 
-private struct LeafStylesheet : BStylesheet {
-    var baseColor : ColorTheme?
+private struct LeafStylesheet: BStylesheet {
+    var baseColor: ColorTheme?
 
     init(context: SlicingContext) throws {
-        self.baseColor = try context.stylesheets.get(DerivedStylesheet.self).baseColor
+        baseColor = try context.stylesheets.get(DerivedStylesheet.self).baseColor
     }
 }
 
-private struct CycleA : BStylesheet {
+private struct CycleA: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleB.self)
     }
 }
 
-private struct CycleB : BStylesheet {
+private struct CycleB: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleA.self)
     }
 }
 
-
-@Suite("BContext Stylesheets")
 struct BContextStylesheetTests {
-
     private func makeContext(
         traits: BTraits = .init(),
-        themes: BThemes = .init()
+        themes: BThemes = .init(),
     ) -> BContext {
         BContext(traits: traits, themes: themes)
     }

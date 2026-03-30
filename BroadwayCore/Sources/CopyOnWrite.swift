@@ -7,7 +7,6 @@
 
 import Foundation
 
-
 /// A property wrapper that provides copy-on-write semantics for value types.
 ///
 /// `CopyOnWrite` wraps a value in a reference-counted box, deferring copies
@@ -37,8 +36,7 @@ import Foundation
 /// ```
 @propertyWrapper
 public struct CopyOnWrite<Value> {
-
-    public init(wrappedValue : Value) {
+    public init(wrappedValue: Value) {
         box = .init(value: wrappedValue)
     }
 
@@ -47,7 +45,7 @@ public struct CopyOnWrite<Value> {
     /// On read, returns the current value directly. On write, creates a new
     /// copy of the underlying storage if it is shared with other instances;
     /// otherwise mutates in place.
-    public var wrappedValue : Value {
+    public var wrappedValue: Value {
         get {
             _unsafeUnderlyingValue
         }
@@ -67,16 +65,15 @@ public struct CopyOnWrite<Value> {
     ///   meaning changes will be visible to all instances that share the same
     ///   underlying storage. Only use this when you are certain the storage is
     ///   not shared, or when shared mutation is intentional.
-    @_spi(Internal) public var _unsafeUnderlyingValue : Value {
+    @_spi(Internal) public var _unsafeUnderlyingValue: Value {
         get { box.value }
         nonmutating set { box.value = newValue }
     }
 
-    private var box : Box
+    private var box: Box
 
     fileprivate class Box {
-
-        var value : Value
+        var value: Value
 
         init(value: Value) {
             self.value = value
@@ -84,23 +81,17 @@ public struct CopyOnWrite<Value> {
     }
 }
 
+extension CopyOnWrite: Equatable where Value: Equatable {}
+extension CopyOnWrite: Hashable where Value: Hashable {}
 
-extension CopyOnWrite : Equatable where Value:Equatable {}
-extension CopyOnWrite : Hashable where Value:Hashable {}
-
-
-extension CopyOnWrite.Box : Equatable where Value:Equatable {
-
-    static func == (lhs:CopyOnWrite.Box, rhs:CopyOnWrite.Box) -> Bool {
+extension CopyOnWrite.Box: Equatable where Value: Equatable {
+    static func == (lhs: CopyOnWrite.Box, rhs: CopyOnWrite.Box) -> Bool {
         lhs === rhs || lhs.value == rhs.value
     }
-
 }
 
-extension CopyOnWrite.Box : Hashable where Value:Hashable {
-
+extension CopyOnWrite.Box: Hashable where Value: Hashable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(value)
     }
-
 }

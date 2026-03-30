@@ -1,10 +1,7 @@
 import Testing
 @_spi(Internal) @testable import BroadwayCore
 
-
-@Suite("CopyOnWrite")
 struct CopyOnWriteTests {
-
     // MARK: - Initialization
 
     @Test("Stores the initial value")
@@ -133,7 +130,7 @@ struct CopyOnWriteTests {
 
     @Test("Property wrapper preserves copy-on-write semantics")
     func propertyWrapperCOW() {
-        struct Model : Equatable {
+        struct Model: Equatable {
             @CopyOnWrite var data: [Int]
         }
 

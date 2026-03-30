@@ -7,7 +7,7 @@ func framework(
     _ name: String,
     bundleIdSuffix: String,
     dependencies: [TargetDependency] = [],
-    testHost: String? = nil
+    testHost: String? = nil,
 ) -> [Target] {
     var testDependencies: [TargetDependency] = [.target(name: name)]
     if let testHost {
@@ -22,7 +22,7 @@ func framework(
             bundleId: "com.broadway.\(bundleIdSuffix)",
             deploymentTargets: deployment,
             sources: ["\(name)/Sources/**"],
-            dependencies: dependencies
+            dependencies: dependencies,
         ),
         .target(
             name: "\(name)Tests",
@@ -31,7 +31,7 @@ func framework(
             bundleId: "com.broadway.\(bundleIdSuffix).tests",
             deploymentTargets: deployment,
             sources: ["\(name)/Tests/**"],
-            dependencies: testDependencies
+            dependencies: testDependencies,
         ),
     ]
 }
@@ -40,7 +40,7 @@ let project = Project(
     name: "Broadway",
     options: .options(
         defaultKnownRegions: ["en"],
-        developmentRegion: "en"
+        developmentRegion: "en",
     ),
     targets: [
         .target(
@@ -55,7 +55,7 @@ let project = Project(
             ]),
             sources: ["BroadwayCatalog/Sources/**"],
             resources: ["BroadwayCatalog/Resources/**"],
-            dependencies: [.target(name: "BroadwayUI")]
+            dependencies: [.target(name: "BroadwayUI")],
         ),
         .target(
             name: "BroadwayCatalogTests",
@@ -64,9 +64,9 @@ let project = Project(
             bundleId: "com.broadway.catalog.tests",
             deploymentTargets: deployment,
             sources: ["BroadwayCatalog/Tests/**"],
-            dependencies: [.target(name: "BroadwayCatalog")]
+            dependencies: [.target(name: "BroadwayCatalog")],
         ),
     ]
-    + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")], testHost: "BroadwayCatalog")
-    + framework("BroadwayCore", bundleIdSuffix: "core")
+        + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")], testHost: "BroadwayCatalog")
+        + framework("BroadwayCore", bundleIdSuffix: "core"),
 )
