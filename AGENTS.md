@@ -24,14 +24,28 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │       └── BroadwayCatalogTests.swift
 ├── BroadwayUI/
 │   ├── Sources/                        # UI framework source code
-│   │   └── BroadwayUI.swift            # Framework entry point
+│   │   └── BRootViewController.swift   # Root container VC (context + trait propagation)
 │   └── Tests/                          # UI framework unit tests (Swift Testing)
-│       └── BroadwayUITests.swift
+│       └── BRootViewControllerTests.swift
 ├── BroadwayCore/
 │   ├── Sources/                        # Core framework source code
-│   │   └── BroadwayCore.swift          # Framework entry point
+│   │   ├── AnyEquatable.swift          # Type-erased Equatable wrapper
+│   │   ├── BAccessibility.swift        # Accessibility snapshot + Observer
+│   │   ├── BContext.swift              # Root environment container
+│   │   ├── BContext+UITraits.swift     # UITraitDefinition bridge (#if canImport(UIKit))
+│   │   ├── BStylesheets.swift          # Lazy cached stylesheet resolver
+│   │   ├── BThemes.swift               # Type-keyed theme container
+│   │   ├── BTraits.swift               # Type-keyed trait container
+│   │   ├── CopyOnWrite.swift           # COW property wrapper
+│   │   └── TypeIdentifier.swift        # Lightweight type-keyed identifier
 │   └── Tests/                          # Core framework unit tests (Swift Testing)
-│       └── BroadwayCoreTests.swift
+│       ├── AnyEquatableTests.swift
+│       ├── BAccessibilityTests.swift
+│       ├── BContextTests.swift
+│       ├── BThemesTests.swift
+│       ├── BTraitsTests.swift
+│       ├── CopyOnWriteTests.swift
+│       └── TypeIdentifierTests.swift
 ├── Plans/                              # Archived implementation plans (see index below)
 ├── swiftformat                         # Run SwiftFormat (--lint to check only)
 ├── ide                                 # Dev script (installs hooks, runs tuist generate)

@@ -26,4 +26,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v3
-      - run: tuist test
+      - run: mise exec -- tuist test

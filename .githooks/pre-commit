@@ -1,10 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.swift')
+# Note: this lints working-tree content, not the staged blob.
+# Partially-staged files are checked as they appear on disk.
 
-if [ -z "$staged" ]; then
-    exit 0
-fi
-
-mise exec -- swiftformat --lint $staged
+git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
+  | xargs -0 --no-run-if-empty mise exec -- swiftformat --lint
