@@ -41,7 +41,7 @@ public struct SlicingContext {
 /// A keyed cache of ``BStylesheet`` instances, scoped to a specific
 /// combination of traits and themes. Stylesheets are created lazily on
 /// first access and cached for subsequent lookups with the same key.
-public struct BStylesheets: Equatable {
+public struct BStylesheets: Equatable, @unchecked Sendable {
     /// The current trait values (accessibility, size class, etc.).
     public var traits: BTraits {
         get { config.traits }

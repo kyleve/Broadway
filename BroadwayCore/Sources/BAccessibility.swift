@@ -12,7 +12,7 @@ import Foundation
 /// Each property mirrors a corresponding `UIAccessibility` class property.
 /// Use ``current()`` to read the live system state, or construct
 /// instances directly for testing and previews.
-public struct BAccessibility: Equatable, Hashable {
+public struct BAccessibility: Equatable, Hashable, Sendable {
     // MARK: Assistive Technologies
 
     public var isVoiceOverRunning: Bool
@@ -137,8 +137,8 @@ public struct BAccessibility: Equatable, Hashable {
         ///
         /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
         /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
-        static func observeChanges(
-            _ onChange: @escaping (BAccessibility, BAccessibility) -> Void,
+        @MainActor static func observeChanges(
+            _ onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void,
         ) -> Observer {
             Observer(onChange: onChange)
         }
@@ -147,20 +147,21 @@ public struct BAccessibility: Equatable, Hashable {
         /// via a callback. Manages its own `NotificationCenter` registrations;
         /// call ``start()`` and ``stop()`` to control the observation lifecycle.
         /// Automatically stops on deallocation.
+        @MainActor
         final class Observer {
-            private let onChange: (BAccessibility, BAccessibility) -> Void
+            private let onChange: @MainActor @Sendable (BAccessibility, BAccessibility) -> Void
 
             private var old: BAccessibility?
 
             private var isObserving: Bool = false
 
-            public init(onChange: @escaping (BAccessibility, BAccessibility) -> Void) {
+            public init(onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void) {
                 self.onChange = onChange
                 old = nil
             }
 
             deinit {
-                stop()
+                NotificationCenter.default.removeObserver(self)
             }
 
             /// Begins observing accessibility changes. Safe to call multiple times;

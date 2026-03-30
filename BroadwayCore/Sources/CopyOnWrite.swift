@@ -83,6 +83,7 @@ public struct CopyOnWrite<Value> {
 
 extension CopyOnWrite: Equatable where Value: Equatable {}
 extension CopyOnWrite: Hashable where Value: Hashable {}
+extension CopyOnWrite: @unchecked Sendable where Value: Sendable {}
 
 extension CopyOnWrite.Box: Equatable where Value: Equatable {
     static func == (lhs: CopyOnWrite.Box, rhs: CopyOnWrite.Box) -> Bool {

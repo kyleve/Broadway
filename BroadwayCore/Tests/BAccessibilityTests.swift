@@ -121,7 +121,7 @@ struct BAccessibilityTests {
 
     import UIKit
 
-    struct BAccessibilityObserverTests {
+    @MainActor struct BAccessibilityObserverTests {
         // MARK: - Factory
 
         @Test("observeChanges returns an Observer")

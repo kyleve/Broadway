@@ -11,7 +11,7 @@ import Foundation
 /// carrying the current ``BTraits``, ``BThemes``, and the lazily-populated
 /// ``BStylesheets`` cache. Updating `traits` or `themes` propagates to
 /// `stylesheets`, ensuring cached stylesheets are re-created with fresh inputs.
-public struct BContext: Equatable {
+public struct BContext: Equatable, Sendable {
     public init(traits: BTraits = .init(), themes: BThemes = .init()) {
         self.traits = traits
         self.themes = themes

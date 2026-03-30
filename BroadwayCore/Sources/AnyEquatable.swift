@@ -22,7 +22,7 @@ import Foundation
 /// a == b  // true  — same type, same value
 /// a == c  // false — different types
 /// ```
-struct AnyEquatable: Equatable {
+struct AnyEquatable: Equatable, @unchecked Sendable {
     /// The type-erased value.
     let base: Any
 
