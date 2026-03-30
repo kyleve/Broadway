@@ -32,6 +32,8 @@ extension BAccessibility : BTraitsValue {
 /// set returns its ``BTraitsValue/defaultValue``.
 public struct BTraits : Equatable, Hashable {
 
+    public init() {}
+
     /// Gets or sets the trait for the given type. Returns
     /// ``BTraitsValue/defaultValue`` if no value has been set.
     public subscript<Value:BTraitsValue>(_ value : Value.Type) -> Value {

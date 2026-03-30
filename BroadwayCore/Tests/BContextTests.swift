@@ -61,11 +61,7 @@ struct BContextStylesheetTests {
         traits: BTraits = .init(),
         themes: BThemes = .init()
     ) -> BContext {
-        BContext(
-            traits: traits,
-            themes: themes,
-            stylesheets: BStylesheets(config: .init(traits: traits, themes: themes))
-        )
+        BContext(traits: traits, themes: themes)
     }
 
     // MARK: - Lazy Creation

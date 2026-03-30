@@ -23,6 +23,8 @@ public protocol BTheme : Equatable, Hashable {
 /// Themes are optional; accessing a type that hasn't been set returns `nil`.
 public struct BThemes : Equatable, Hashable {
 
+    public init() {}
+
     /// Gets or sets the theme for the given type. Returns `nil` if no
     /// theme of that type has been set.
     public subscript<Theme:BTheme>(_ value : Theme.Type) -> Theme? {
