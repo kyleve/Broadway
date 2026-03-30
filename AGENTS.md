@@ -27,6 +27,9 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │   │   └── BRootViewController.swift   # Root container VC (context + trait propagation)
 │   └── Tests/                          # UI framework unit tests (Swift Testing)
 │       └── BRootViewControllerTests.swift
+├── BroadwayTestHost/
+│   └── Sources/                        # Minimal app used as test host for unit tests
+│       └── TestHostApp.swift           # @main entry point (empty window)
 ├── BroadwayTesting/
 │   └── Sources/                        # Test utilities framework (depends on BroadwayCore)
 │       └── BroadwayTesting.swift       # Module entry point
@@ -84,6 +87,7 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 | `BroadwayUITests` | `.unitTests` | `com.broadway.ui.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayCore` | `.framework` | `com.broadway.core` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayCoreTests` | `.unitTests` | `com.broadway.core.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
+| `BroadwayTestHost` | `.app` | `com.broadway.testhost` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayTesting` | `.framework` | `com.broadway.testing` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 
 ### Dependency Graph
@@ -91,9 +95,11 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 ```
 BroadwayCatalog (app) ──▶ BroadwayUI (framework) ──▶ BroadwayCore (framework)
                                                             ▲
+BroadwayTestHost (app) ──▶ BroadwayUI ──────────────────────┤
+                                                            │
 BroadwayTesting (framework) ────────────────────────────────┘
 
-All test targets depend on BroadwayTesting.
+All framework test targets use BroadwayTestHost and depend on BroadwayTesting.
 ```
 
 ## Key Conventions
@@ -101,6 +107,7 @@ All test targets depend on BroadwayTesting.
 - **SwiftUI** is the UI framework. Catalog app views live under `BroadwayCatalog/Sources/`.
 - **BroadwayUI** is the reusable component library. All shared UI lives under `BroadwayUI/Sources/`.
 - **BroadwayCore** provides foundational utilities and shared logic. Source lives under `BroadwayCore/Sources/`.
+- **BroadwayTestHost** is a minimal app that serves as the test host for framework unit tests. Source lives under `BroadwayTestHost/Sources/`.
 - **BroadwayTesting** provides shared test utilities. All test targets depend on it. Source lives under `BroadwayTesting/Sources/`.
 - **Swift Testing** (`import Testing`) is used for unit tests, not XCTest.
 - Source files use `<Target>/Sources/**` globs; test files use `<Target>/Tests/**`.

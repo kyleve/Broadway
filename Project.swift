@@ -7,17 +7,8 @@ func framework(
     _ name: String,
     bundleIdSuffix: String,
     dependencies: [TargetDependency] = [],
-    testHost: String? = nil,
 ) -> [Target] {
-    var testDependencies: [TargetDependency] = [
-        .target(name: name),
-        .target(name: "BroadwayTesting"),
-    ]
-    if let testHost {
-        testDependencies.append(.target(name: testHost))
-    }
-
-    return [
+    [
         .target(
             name: name,
             destinations: destinations,
@@ -34,7 +25,11 @@ func framework(
             bundleId: "com.broadway.\(bundleIdSuffix).tests",
             deploymentTargets: deployment,
             sources: ["\(name)/Tests/**"],
-            dependencies: testDependencies,
+            dependencies: [
+                .target(name: name),
+                .target(name: "BroadwayTesting"),
+                .target(name: "BroadwayTestHost"),
+            ],
         ),
     ]
 }
@@ -73,6 +68,20 @@ let project = Project(
             ],
         ),
         .target(
+            name: "BroadwayTestHost",
+            destinations: destinations,
+            product: .app,
+            bundleId: "com.broadway.testhost",
+            deploymentTargets: deployment,
+            infoPlist: .extendingDefault(with: [
+                "UILaunchScreen": .dictionary([:]),
+            ]),
+            sources: ["BroadwayTestHost/Sources/**"],
+            dependencies: [
+                .target(name: "BroadwayUI"),
+            ],
+        ),
+        .target(
             name: "BroadwayTesting",
             destinations: destinations,
             product: .framework,
@@ -85,6 +94,6 @@ let project = Project(
             ],
         ),
     ]
-        + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")], testHost: "BroadwayCatalog")
+        + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")])
         + framework("BroadwayCore", bundleIdSuffix: "core"),
 )
