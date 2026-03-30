@@ -5,9 +5,6 @@ import Testing
 
 private enum ColorTheme: String, BTheme {
     case light, dark
-    static var defaultValue: Self {
-        .light
-    }
 }
 
 private struct TestStylesheet: BStylesheet {
@@ -42,6 +39,17 @@ private struct LeafStylesheet: BStylesheet {
     }
 }
 
+private struct CountingStylesheet: BStylesheet, Equatable {
+    static var initCount = 0
+
+    var color: ColorTheme?
+
+    init(context: SlicingContext) {
+        Self.initCount += 1
+        color = context.themes[ColorTheme.self]
+    }
+}
+
 private struct CycleA: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleB.self)
@@ -51,6 +59,44 @@ private struct CycleA: BStylesheet {
 private struct CycleB: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleA.self)
+    }
+}
+
+private struct SelfCycle: BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets.get(SelfCycle.self)
+    }
+}
+
+private struct CycleC: BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets.get(CycleA.self)
+    }
+}
+
+private struct ThreeNodeCycleA: BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets.get(ThreeNodeCycleB.self)
+    }
+}
+
+private struct ThreeNodeCycleB: BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets.get(ThreeNodeCycleC.self)
+    }
+}
+
+private struct ThreeNodeCycleC: BStylesheet {
+    init(context: SlicingContext) throws {
+        _ = try context.stylesheets.get(ThreeNodeCycleA.self)
+    }
+}
+
+private struct FailingError: Error, Equatable {}
+
+private struct FailingStylesheet: BStylesheet {
+    init(context _: SlicingContext) throws {
+        throw FailingError()
     }
 }
 
@@ -183,5 +229,101 @@ struct BContextStylesheetTests {
         let error = CyclicDependencyError(path: ["CycleA", "CycleB", "CycleA"])
 
         #expect(error.description == "Stylesheet dependency cycle: CycleA → CycleB → CycleA")
+    }
+
+    @Test("Self-referencing stylesheet throws CyclicDependencyError")
+    func selfCycle() {
+        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+
+        #expect(throws: CyclicDependencyError.self) {
+            _ = try stylesheets.get(SelfCycle.self)
+        }
+    }
+
+    @Test("Three-node cycle throws CyclicDependencyError with full path")
+    func threeNodeCycle() {
+        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+
+        let error = #expect(throws: CyclicDependencyError.self) {
+            _ = try stylesheets.get(ThreeNodeCycleA.self)
+        }
+
+        #expect(error?.path.count == 4)
+        #expect(error?.path.first == "ThreeNodeCycleA")
+        #expect(error?.path.last == "ThreeNodeCycleA")
+    }
+
+    @Test("Non-cycle error propagates from stylesheet init")
+    func nonCycleThrow() {
+        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+
+        #expect(throws: FailingError.self) {
+            _ = try stylesheets.get(FailingStylesheet.self)
+        }
+    }
+
+    @Test("set() stores a stylesheet that get() returns")
+    func setAndGet() throws {
+        var themes = BThemes()
+        themes[ColorTheme.self] = .dark
+        let source = BStylesheets(config: .init(traits: .init(), themes: themes))
+        let sheet = try source.get(TestStylesheet.self)
+
+        var target = BStylesheets(config: .init(traits: .init(), themes: themes))
+        target.set(sheet)
+
+        let retrieved = try target.get(TestStylesheet.self)
+        #expect(retrieved == sheet)
+    }
+
+    @Test("Changing traits re-creates the stylesheet")
+    func traitsInvalidationProvenByCounter() throws {
+        CountingStylesheet.initCount = 0
+
+        var context = BContext()
+        _ = try context.stylesheets.get(CountingStylesheet.self)
+        #expect(CountingStylesheet.initCount == 1)
+
+        context.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
+        _ = try context.stylesheets.get(CountingStylesheet.self)
+        #expect(CountingStylesheet.initCount == 2)
+    }
+}
+
+// MARK: - BContext Tests
+
+struct BContextTests {
+    @Test("Default init produces equal instances")
+    func defaultEquality() {
+        #expect(BContext() == BContext())
+    }
+
+    @Test("Contexts with different traits are not equal")
+    func traitInequality() {
+        var a = BContext()
+        a.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
+        #expect(a != BContext())
+    }
+
+    @Test("Contexts with different themes are not equal")
+    func themeInequality() {
+        var a = BContext()
+        a.themes[ColorTheme.self] = .dark
+        #expect(a != BContext())
+    }
+
+    @Test("Trait mutation propagates to stylesheets config")
+    func traitPropagation() {
+        var context = BContext()
+        let accessibility = BAccessibility(isVoiceOverRunning: true)
+        context.traits.accessibility = accessibility
+        #expect(context.stylesheets.traits.accessibility == accessibility)
+    }
+
+    @Test("Theme mutation propagates to stylesheets config")
+    func themePropagation() {
+        var context = BContext()
+        context.themes[ColorTheme.self] = .dark
+        #expect(context.stylesheets.themes[ColorTheme.self] == .dark)
     }
 }

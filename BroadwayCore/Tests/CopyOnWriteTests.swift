@@ -142,6 +142,22 @@ struct CopyOnWriteTests {
         #expect(b.data == [1, 2, 3, 4])
     }
 
+    // MARK: - Hashable
+
+    @Test("Equal values produce the same hash")
+    func hashableConsistency() {
+        let a = CopyOnWrite(wrappedValue: 42)
+        let b = CopyOnWrite(wrappedValue: 42)
+        #expect(a.hashValue == b.hashValue)
+    }
+
+    @Test("Can be used as a dictionary key")
+    func usableAsDictionaryKey() {
+        let key = CopyOnWrite(wrappedValue: "key")
+        let dict = [key: "value"]
+        #expect(dict[key] == "value")
+    }
+
     // MARK: - Edge Cases
 
     @Test("Works with an empty collection")

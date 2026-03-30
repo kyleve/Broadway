@@ -50,6 +50,22 @@
             let vc = BRootViewController(child: UIViewController())
             #expect(vc.traitOverrides.bContext == vc.context)
         }
+
+        @Test("Default bContext on UITraitCollection equals BContext()")
+        func defaultTraitCollectionContext() {
+            let tc = UITraitCollection()
+            #expect(tc.bContext == BContext())
+        }
+
+        @Test("Child inherits bContext after layout")
+        func childInheritsContext() {
+            let child = UIViewController()
+            let root = BRootViewController(child: child)
+            root.loadViewIfNeeded()
+            root.view.layoutIfNeeded()
+
+            #expect(child.traitCollection.bContext == root.context)
+        }
     }
 
 #endif
