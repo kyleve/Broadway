@@ -55,7 +55,6 @@
                 guard let self else { return }
                 context.traits.accessibility = new
             }
-            accessibilityObserver?.start()
         }
 
         /// Creates a root container that hosts SwiftUI content.
@@ -75,7 +74,10 @@
         override public func viewDidLoad() {
             super.viewDidLoad()
 
+            child.view.frame = view.bounds
             view.addSubview(child.view)
+
+            accessibilityObserver?.start()
         }
 
         override public func viewWillLayoutSubviews() {

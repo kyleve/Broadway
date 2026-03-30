@@ -4,11 +4,13 @@ import Testing
 // MARK: - Test Fixtures
 
 private enum ColorTheme: String, BTheme {
+    static let defaultValue: Self = .light
+
     case light, dark
 }
 
 private struct TestStylesheet: BStylesheet {
-    var color: ColorTheme?
+    var color: ColorTheme
 
     init(context: SlicingContext) {
         color = context.themes[ColorTheme.self]
@@ -16,7 +18,7 @@ private struct TestStylesheet: BStylesheet {
 }
 
 private struct BaseStylesheet: BStylesheet {
-    var color: ColorTheme?
+    var color: ColorTheme
 
     init(context: SlicingContext) {
         color = context.themes[ColorTheme.self]
@@ -24,7 +26,7 @@ private struct BaseStylesheet: BStylesheet {
 }
 
 private struct DerivedStylesheet: BStylesheet {
-    var baseColor: ColorTheme?
+    var baseColor: ColorTheme
 
     init(context: SlicingContext) throws {
         baseColor = try context.stylesheets.get(BaseStylesheet.self).color
@@ -32,7 +34,7 @@ private struct DerivedStylesheet: BStylesheet {
 }
 
 private struct LeafStylesheet: BStylesheet {
-    var baseColor: ColorTheme?
+    var baseColor: ColorTheme
 
     init(context: SlicingContext) throws {
         baseColor = try context.stylesheets.get(DerivedStylesheet.self).baseColor
@@ -42,7 +44,7 @@ private struct LeafStylesheet: BStylesheet {
 private struct CountingStylesheet: BStylesheet, Equatable {
     static var initCount = 0
 
-    var color: ColorTheme?
+    var color: ColorTheme
 
     init(context: SlicingContext) {
         Self.initCount += 1
@@ -140,7 +142,7 @@ struct BContextStylesheetTests {
         var context = makeContext()
 
         let before = try context.stylesheets.get(TestStylesheet.self)
-        #expect(before.color == nil)
+        #expect(before.color == .light)
 
         context.themes[ColorTheme.self] = .dark
 
@@ -192,7 +194,7 @@ struct BContextStylesheetTests {
         var context = makeContext()
 
         let before = try context.stylesheets.get(DerivedStylesheet.self)
-        #expect(before.baseColor == nil)
+        #expect(before.baseColor == .light)
 
         context.themes[ColorTheme.self] = .dark
 
@@ -202,63 +204,71 @@ struct BContextStylesheetTests {
 
     // MARK: - Cycle Detection
 
-    @Test("Circular stylesheet dependency throws CyclicDependencyError")
+    @Test("Circular stylesheet dependency throws cyclicDependency")
     func cycleThrows() {
         let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
-        #expect(throws: CyclicDependencyError.self) {
+        #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(CycleA.self)
         }
     }
 
-    @Test("CyclicDependencyError includes the dependency path")
+    @Test("cyclicDependency error includes the dependency path")
     func cyclePath() {
         let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
-        let error = #expect(throws: CyclicDependencyError.self) {
+        let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(CycleA.self)
         }
 
-        #expect(error?.path.first == "CycleA")
-        #expect(error?.path.last == "CycleA")
-        #expect(error?.path.count == 3)
+        if case let .cyclicDependency(path) = error {
+            #expect(path.first == "CycleA")
+            #expect(path.last == "CycleA")
+            #expect(path.count == 3)
+        }
     }
 
-    @Test("CyclicDependencyError description shows the full cycle path")
+    @Test("cyclicDependency description shows the full cycle path")
     func cycleDescription() {
-        let error = CyclicDependencyError(path: ["CycleA", "CycleB", "CycleA"])
+        let error = StylesheetError.cyclicDependency(path: ["CycleA", "CycleB", "CycleA"])
 
         #expect(error.description == "Stylesheet dependency cycle: CycleA → CycleB → CycleA")
     }
 
-    @Test("Self-referencing stylesheet throws CyclicDependencyError")
+    @Test("Self-referencing stylesheet throws cyclicDependency")
     func selfCycle() {
         let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
-        #expect(throws: CyclicDependencyError.self) {
+        #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(SelfCycle.self)
         }
     }
 
-    @Test("Three-node cycle throws CyclicDependencyError with full path")
+    @Test("Three-node cycle throws cyclicDependency with full path")
     func threeNodeCycle() {
         let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
-        let error = #expect(throws: CyclicDependencyError.self) {
+        let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(ThreeNodeCycleA.self)
         }
 
-        #expect(error?.path.count == 4)
-        #expect(error?.path.first == "ThreeNodeCycleA")
-        #expect(error?.path.last == "ThreeNodeCycleA")
+        if case let .cyclicDependency(path) = error {
+            #expect(path.count == 4)
+            #expect(path.first == "ThreeNodeCycleA")
+            #expect(path.last == "ThreeNodeCycleA")
+        }
     }
 
-    @Test("Non-cycle error propagates from stylesheet init")
+    @Test("Non-cycle error wraps in creationFailed")
     func nonCycleThrow() {
         let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
 
-        #expect(throws: FailingError.self) {
+        let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(FailingStylesheet.self)
+        }
+
+        if case let .creationFailed(_, underlying) = error {
+            #expect(underlying is FailingError)
         }
     }
 
@@ -324,6 +334,8 @@ struct BContextTests {
     func themePropagation() {
         var context = BContext()
         context.themes[ColorTheme.self] = .dark
-        #expect(context.stylesheets.themes[ColorTheme.self] == .dark)
+
+        let theme: ColorTheme = context.stylesheets.themes[ColorTheme.self]
+        #expect(theme == .dark)
     }
 }

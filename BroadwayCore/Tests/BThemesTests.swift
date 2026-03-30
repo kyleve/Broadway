@@ -2,20 +2,24 @@
 import Testing
 
 private enum Palette: String, BTheme {
+    static let defaultValue: Self = .light
+
     case light, dark
 }
 
 private enum Typography: String, BTheme {
+    static let defaultValue: Self = .standard
+
     case standard, compact
 }
 
 struct BThemesTests {
-    // MARK: - Nil for Unset
+    // MARK: - Default Value
 
-    @Test("Unset theme returns nil")
-    func unsetReturnsNil() {
+    @Test("Unset theme returns defaultValue")
+    func unsetReturnsDefault() {
         let themes = BThemes()
-        #expect(themes[Palette.self] == nil)
+        #expect(themes[Palette.self] == .light)
     }
 
     // MARK: - Set / Get
@@ -30,9 +34,9 @@ struct BThemesTests {
     @Test("Setting a theme twice uses the latest value")
     func overwrite() {
         var themes = BThemes()
-        themes[Palette.self] = .light
         themes[Palette.self] = .dark
-        #expect(themes[Palette.self] == .dark)
+        themes[Palette.self] = .light
+        #expect(themes[Palette.self] == .light)
     }
 
     @Test("Multiple theme types coexist")
@@ -45,14 +49,14 @@ struct BThemesTests {
         #expect(themes[Typography.self] == .compact)
     }
 
-    // MARK: - Removal
+    // MARK: - Reset to Default
 
-    @Test("Assigning nil removes the theme")
-    func removalViaNil() {
+    @Test("Assigning defaultValue resets to default and matches an empty instance")
+    func resetToDefault() {
         var themes = BThemes()
         themes[Palette.self] = .dark
-        themes[Palette.self] = nil
-        #expect(themes[Palette.self] == nil)
+        themes[Palette.self] = .light
+        #expect(themes == BThemes())
     }
 
     // MARK: - Equatable
@@ -85,11 +89,11 @@ struct BThemesTests {
     @Test("Mutating a copy does not affect the original")
     func copyIndependence() {
         var a = BThemes()
-        a[Palette.self] = .light
+        a[Palette.self] = .dark
         var b = a
-        b[Palette.self] = .dark
+        b[Palette.self] = .light
 
-        #expect(a[Palette.self] == .light)
-        #expect(b[Palette.self] == .dark)
+        #expect(a[Palette.self] == .dark)
+        #expect(b[Palette.self] == .light)
     }
 }

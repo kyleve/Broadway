@@ -9,8 +9,8 @@ import Foundation
 
 /// The root environment container that flows through the view hierarchy,
 /// carrying the current ``BTraits``, ``BThemes``, and the lazily-populated
-/// ``BStylesheets`` cache. Updating `traits` or `themes` propagates to
-/// `stylesheets`, ensuring cached stylesheets are re-created with fresh inputs.
+/// ``BStylesheets`` cache. Updating `traits` or `themes` replaces the
+/// stylesheet cache so subsequent lookups produce fresh instances.
 public struct BContext: Equatable, Sendable {
     public init(traits: BTraits = .init(), themes: BThemes = .init()) {
         self.traits = traits
@@ -19,23 +19,21 @@ public struct BContext: Equatable, Sendable {
     }
 
     /// The current trait values (accessibility, size class, etc.).
-    /// Setting this propagates the new traits into ``stylesheets``.
     public var traits: BTraits {
         didSet {
-            stylesheets.traits = traits
+            guard traits != oldValue else { return }
+            stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
         }
     }
 
-    /// The current theme values. Setting this propagates the new
-    /// themes into ``stylesheets``.
+    /// The current theme values.
     @CopyOnWrite public var themes: BThemes {
         didSet {
-            stylesheets.themes = themes
+            guard themes != oldValue else { return }
+            stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
         }
     }
 
-    /// The stylesheet cache, keyed by `(stylesheet type, traits, themes)`.
-    /// Stylesheets are created lazily on first access. Changing `traits`
-    /// or `themes` causes subsequent lookups to produce fresh instances.
+    /// Lazily-populated stylesheet cache, scoped to the current traits and themes.
     @CopyOnWrite public private(set) var stylesheets: BStylesheets
 }

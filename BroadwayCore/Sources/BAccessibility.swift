@@ -129,11 +129,11 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
     }
 
     public extension BAccessibility {
-        /// Creates an ``Observer`` that calls `onChange` whenever a system
-        /// accessibility setting changes.
+        /// Keeps a ``BContext``'s accessibility traits in sync with the device
+        /// by delivering change notifications as `(old, new)` pairs.
         ///
-        /// The observer is returned in a stopped state; call ``Observer/start()``
-        /// to begin receiving callbacks.
+        /// Retain the returned ``Observer`` for the duration of observation.
+        /// Call ``Observer/start()`` to begin and ``Observer/stop()`` to pause.
         ///
         /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
         /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
@@ -143,10 +143,10 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
             Observer(onChange: onChange)
         }
 
-        /// Observes system accessibility notification changes and reports diffs
-        /// via a callback. Manages its own `NotificationCenter` registrations;
-        /// call ``start()`` and ``stop()`` to control the observation lifecycle.
-        /// Automatically stops on deallocation.
+        /// Manages `NotificationCenter` registrations for system accessibility
+        /// changes and reports diffs via a callback.
+        /// Call ``start()`` and ``stop()`` to control the observation lifecycle.
+        /// Automatically unregisters on deallocation.
         @MainActor
         final class Observer {
             private let onChange: @MainActor @Sendable (BAccessibility, BAccessibility) -> Void
@@ -161,7 +161,9 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
             }
 
             deinit {
-                NotificationCenter.default.removeObserver(self)
+                for name in Self.notifications {
+                    NotificationCenter.default.removeObserver(self, name: name, object: nil)
+                }
             }
 
             /// Begins observing accessibility changes. Safe to call multiple times;
@@ -175,7 +177,7 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
                 for name in Self.notifications {
                     NotificationCenter.default.addObserver(
                         self,
-                        selector: #selector(accessibilityDidChange),
+                        selector: #selector(accessibilityDidChange(_:)),
                         name: name,
                         object: nil,
                     )

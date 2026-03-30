@@ -18,16 +18,24 @@ public protocol BStylesheet: Equatable {
     init(context: SlicingContext) throws
 }
 
-/// Thrown when a stylesheet's initialization creates a dependency cycle.
-///
-/// The ``path`` array describes the cycle, e.g. `["A", "B", "A"]`
-/// means `A` depends on `B` which depends on `A`.
-public struct CyclicDependencyError: Error, CustomStringConvertible {
-    /// The type names involved in the cycle, starting and ending with the same type.
-    public let path: [String]
+/// Errors thrown by ``BStylesheets/get(_:)`` during stylesheet resolution.
+public enum StylesheetError: Error, CustomStringConvertible {
+    /// A stylesheet's initialization created a dependency cycle.
+    ///
+    /// The associated `path` describes the cycle, e.g. `["A", "B", "A"]`
+    /// means `A` depends on `B` which depends on `A`.
+    case cyclicDependency(path: [String])
+
+    /// A stylesheet's `init(context:)` threw a non-stylesheet error.
+    case creationFailed(type: String, underlying: any Error)
 
     public var description: String {
-        "Stylesheet dependency cycle: \(path.joined(separator: " → "))"
+        switch self {
+            case let .cyclicDependency(path):
+                "Stylesheet dependency cycle: \(path.joined(separator: " → "))"
+            case let .creationFailed(type, underlying):
+                "Failed to create stylesheet '\(type)': \(underlying)"
+        }
     }
 }
 
@@ -74,8 +82,10 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
 
     /// Returns the cached stylesheet of the given type, creating it lazily if needed.
     ///
-    /// - Throws: ``CyclicDependencyError`` if creation triggers a dependency cycle.
-    public func get<Stylesheet: BStylesheet>(_: Stylesheet.Type) throws -> Stylesheet {
+    /// - Throws: ``StylesheetError/cyclicDependency(path:)`` if creation triggers
+    ///   a dependency cycle, or ``StylesheetError/creationFailed(type:underlying:)``
+    ///   if the stylesheet's initializer throws.
+    public func get<Stylesheet: BStylesheet>(_: Stylesheet.Type) throws(StylesheetError) -> Stylesheet {
         let key = Key(stylesheet: .init(Stylesheet.self), traits: traits, themes: themes)
 
         guard let value = cache[key], let value = value.base as? Stylesheet else {
@@ -85,18 +95,23 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
 
             if let cycleStart = creating.firstIndex(of: id) {
                 let path = creating[cycleStart...].map(\.debugDescription) + [id.debugDescription]
-                throw CyclicDependencyError(path: path)
+                throw .cyclicDependency(path: path)
             }
 
             _creating._unsafeUnderlyingValue.append(id)
             defer { _creating._unsafeUnderlyingValue.removeLast() }
 
             let context = SlicingContext(themes: themes, stylesheets: self)
-            let new = try Stylesheet(context: context)
 
-            _cache._unsafeUnderlyingValue[key] = AnyEquatable(new)
-
-            return new
+            do {
+                let new = try Stylesheet(context: context)
+                _cache._unsafeUnderlyingValue[key] = AnyEquatable(new)
+                return new
+            } catch let error as StylesheetError {
+                throw error
+            } catch {
+                throw .creationFailed(type: id.debugDescription, underlying: error)
+            }
         }
 
         return value
@@ -104,7 +119,7 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
 
     /// Explicitly sets a cached stylesheet value for the given type,
     /// replacing any previously cached instance for the current traits and themes.
-    public mutating func set<Stylesheet: BStylesheet>(_ newValue: Stylesheet) {
+    mutating func set<Stylesheet: BStylesheet>(_ newValue: Stylesheet) {
         let key = Key(stylesheet: .init(Stylesheet.self), traits: traits, themes: themes)
         cache[key] = AnyEquatable(newValue)
     }

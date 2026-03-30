@@ -14,7 +14,9 @@
     }
 
     public extension UITraitCollection {
-        /// The ``BContext`` inherited from the nearest ancestor that sets it.
+        /// The Broadway environment container carrying traits, themes,
+        /// and the stylesheet cache. Inherited from the nearest ancestor
+        /// that sets one; returns a default empty context otherwise.
         var bContext: BContext {
             self[BContextTrait.self]
         }

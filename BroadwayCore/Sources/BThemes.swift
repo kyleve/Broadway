@@ -11,22 +11,27 @@ import Foundation
 ///
 /// Conform to this protocol for app-level theme types (e.g. color palettes,
 /// typography scales) that are used by stylesheets during slicing.
-public protocol BTheme: Equatable, Hashable {}
+/// Provide a ``defaultValue`` that is returned when the theme has not been
+/// explicitly set.
+public protocol BTheme: Equatable, Hashable {
+    static var defaultValue: Self { get }
+}
 
 /// A type-keyed container of ``BTheme`` values.
 ///
-/// Themes are optional; accessing a type that hasn't been set returns `nil`.
+/// Themes are always present; accessing a type that hasn't been explicitly
+/// set returns its ``BTheme/defaultValue``.
 public struct BThemes: Equatable, Hashable, Sendable {
     public init() {}
 
-    /// Gets or sets the theme for the given type. Returns `nil` if no
-    /// theme of that type has been set.
-    public subscript<Theme: BTheme>(_: Theme.Type) -> Theme? {
+    /// Gets or sets the theme for the given type. Returns
+    /// ``BTheme/defaultValue`` if no value has been explicitly set.
+    public subscript<Theme: BTheme>(_: Theme.Type) -> Theme {
         get {
             let id = TypeIdentifier(Theme.self)
 
             guard let value = themes[id], let value = value.base as? Theme else {
-                return nil
+                return Theme.defaultValue
             }
 
             return value
@@ -35,10 +40,10 @@ public struct BThemes: Equatable, Hashable, Sendable {
         set {
             let id = TypeIdentifier(Theme.self)
 
-            if let newValue {
-                themes[id] = AnyHashable(newValue)
-            } else {
+            if newValue == Theme.defaultValue {
                 themes[id] = nil
+            } else {
+                themes[id] = AnyHashable(newValue)
             }
         }
     }
