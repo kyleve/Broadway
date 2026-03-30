@@ -27,6 +27,9 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │   │   └── BRootViewController.swift   # Root container VC (context + trait propagation)
 │   └── Tests/                          # UI framework unit tests (Swift Testing)
 │       └── BRootViewControllerTests.swift
+├── BroadwayTesting/
+│   └── Sources/                        # Test utilities framework (depends on BroadwayCore)
+│       └── BroadwayTesting.swift       # Module entry point
 ├── BroadwayCore/
 │   ├── Sources/                        # Core framework source code
 │   │   ├── AnyEquatable.swift          # Type-erased Equatable wrapper
@@ -81,11 +84,16 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 | `BroadwayUITests` | `.unitTests` | `com.broadway.ui.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayCore` | `.framework` | `com.broadway.core` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 | `BroadwayCoreTests` | `.unitTests` | `com.broadway.core.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
+| `BroadwayTesting` | `.framework` | `com.broadway.testing` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
 
 ### Dependency Graph
 
 ```
 BroadwayCatalog (app) ──▶ BroadwayUI (framework) ──▶ BroadwayCore (framework)
+                                                            ▲
+BroadwayTesting (framework) ────────────────────────────────┘
+
+All test targets depend on BroadwayTesting.
 ```
 
 ## Key Conventions
@@ -93,6 +101,7 @@ BroadwayCatalog (app) ──▶ BroadwayUI (framework) ──▶ BroadwayCore (f
 - **SwiftUI** is the UI framework. Catalog app views live under `BroadwayCatalog/Sources/`.
 - **BroadwayUI** is the reusable component library. All shared UI lives under `BroadwayUI/Sources/`.
 - **BroadwayCore** provides foundational utilities and shared logic. Source lives under `BroadwayCore/Sources/`.
+- **BroadwayTesting** provides shared test utilities. All test targets depend on it. Source lives under `BroadwayTesting/Sources/`.
 - **Swift Testing** (`import Testing`) is used for unit tests, not XCTest.
 - Source files use `<Target>/Sources/**` globs; test files use `<Target>/Tests/**`.
 - Resources (asset catalogs, localization files, etc.) go in `BroadwayCatalog/Resources/`.

@@ -9,7 +9,10 @@ func framework(
     dependencies: [TargetDependency] = [],
     testHost: String? = nil,
 ) -> [Target] {
-    var testDependencies: [TargetDependency] = [.target(name: name)]
+    var testDependencies: [TargetDependency] = [
+        .target(name: name),
+        .target(name: "BroadwayTesting"),
+    ]
     if let testHost {
         testDependencies.append(.target(name: testHost))
     }
@@ -64,7 +67,22 @@ let project = Project(
             bundleId: "com.broadway.catalog.tests",
             deploymentTargets: deployment,
             sources: ["BroadwayCatalog/Tests/**"],
-            dependencies: [.target(name: "BroadwayCatalog")],
+            dependencies: [
+                .target(name: "BroadwayCatalog"),
+                .target(name: "BroadwayTesting"),
+            ],
+        ),
+        .target(
+            name: "BroadwayTesting",
+            destinations: destinations,
+            product: .framework,
+            bundleId: "com.broadway.testing",
+            deploymentTargets: deployment,
+            sources: ["BroadwayTesting/Sources/**"],
+            dependencies: [
+                .target(name: "BroadwayCore"),
+                .xctest,
+            ],
         ),
     ]
         + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")], testHost: "BroadwayCatalog")
