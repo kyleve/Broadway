@@ -175,31 +175,11 @@ extension BAccessibility {
 }
 
 extension BAccessibility {
-    /// Keeps a ``BContext``'s accessibility traits in sync with the device
-    /// by delivering change notifications as `(old, new)` pairs.
-    ///
-    /// Retain the returned ``Observer`` for the duration of observation.
-    /// Call ``Observer/start()`` to begin and ``Observer/stop()`` to pause.
-    ///
-    /// - Parameter onChange: Called with `(old, new)` values when a change is detected.
-    /// - Returns: An ``Observer`` that must be retained for the lifetime of observation.
-    @MainActor public static func observe(
-        on notificationCenter: NotificationCenter = .default,
-        with provider: any SettingsProvider = BAccessibility.systemSettings,
-        _ onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void,
-    ) -> Observer {
-        Observer(
-            notificationCenter: notificationCenter,
-            settingsProvider: provider,
-            onChange: onChange,
-        )
-    }
-
     /// Manages `NotificationCenter` registrations for system accessibility
     /// changes and reports diffs via a callback.
     /// Call ``start()`` and ``stop()`` to control the observation lifecycle.
     @MainActor
-    public final class Observer {
+    public final class Observer: BTraitsValueObserver {
         private let onChange: @MainActor @Sendable (BAccessibility, BAccessibility) -> Void
 
         private let notificationCenter: NotificationCenter
@@ -210,8 +190,8 @@ extension BAccessibility {
         private var isObserving: Bool = false
 
         init(
-            notificationCenter: NotificationCenter,
-            settingsProvider: SettingsProvider,
+            notificationCenter: NotificationCenter = .default,
+            settingsProvider: any SettingsProvider = BAccessibility.systemSettings,
             onChange: @MainActor @escaping @Sendable (BAccessibility, BAccessibility) -> Void,
         ) {
             self.notificationCenter = notificationCenter

@@ -18,6 +18,16 @@ extension BAccessibility: BTraitsValue {
     public static var defaultValue: Self {
         .init()
     }
+
+    @MainActor public static var initialValue: BAccessibility {
+        .current()
+    }
+
+    @MainActor public static func makeObserver(
+        onChange: @MainActor @escaping @Sendable (BAccessibility) -> Void,
+    ) -> BAccessibility.Observer {
+        .init { _, new in onChange(new) }
+    }
 }
 
 /// A type-keyed container of ``BTraitsValue`` conforming values
@@ -54,7 +64,45 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
 /// A hashable value that can be stored in ``BTraits``.
 ///
 /// Conforming types provide a ``defaultValue`` that is returned when
-/// the trait has not been explicitly set.
+/// the trait has not been explicitly set. Types that need live system
+/// observation override ``initialValue`` and ``makeObserver(onChange:)``
+/// to supply a snapshot and an observer.
 public protocol BTraitsValue: Hashable {
+    associatedtype Observer: BTraitsValueObserver = NeverObserver
     static var defaultValue: Self { get }
+    @MainActor static var initialValue: Self { get }
+    @MainActor static func makeObserver(
+        onChange: @MainActor @escaping @Sendable (Self) -> Void,
+    ) -> Observer
+}
+
+extension BTraitsValue {
+    @MainActor public static var initialValue: Self {
+        defaultValue
+    }
+}
+
+extension BTraitsValue where Observer == NeverObserver {
+    @MainActor public static func makeObserver(
+        onChange _: @MainActor @escaping @Sendable (Self) -> Void,
+    ) -> NeverObserver {
+        NeverObserver()
+    }
+}
+
+// MARK: - BTraitsValueObserver
+
+/// The interface for an observer that monitors changes to
+/// a single ``BTraitsValue`` type. Retained by ``BTraitsObserver``.
+@MainActor public protocol BTraitsValueObserver: AnyObject {
+    func start()
+    func stop()
+}
+
+/// A no-op observer used as the default ``BTraitsValue/Observer``
+/// for trait values that do not require live observation.
+@MainActor public final class NeverObserver: BTraitsValueObserver {
+    public init() {}
+    public func start() {}
+    public func stop() {}
 }

@@ -10,9 +10,9 @@ import UIKit
 /// A container view controller that owns the root ``BContext`` and
 /// propagates it to all descendants via a custom `UITraitCollection` trait.
 ///
-/// `BRootViewController` manages the ``BAccessibility/Observer``,
-/// keeping ``BContext/traits`` in sync with system accessibility changes
-/// and re-publishing the updated context through `traitOverrides`.
+/// `BRootViewController` manages a ``BTraitsObserver``, keeping
+/// ``BContext/traits`` in sync with system changes and re-publishing
+/// the updated context through `traitOverrides`.
 ///
 /// Use the designated initializer to wrap an arbitrary child view controller,
 /// or the convenience initializer to embed SwiftUI content directly.
@@ -26,8 +26,8 @@ import UIKit
 public final class BRootViewController: UIViewController {
     // MARK: Public
 
-    /// The current context. Updated automatically when accessibility
-    /// settings change. Read this to inspect the live state.
+    /// The current context. Updated automatically when observed
+    /// trait values change. Read this to inspect the live state.
     public private(set) var context: BContext {
         didSet {
             traitOverrides.bContext = context
@@ -46,13 +46,11 @@ public final class BRootViewController: UIViewController {
         addChild(child)
         child.didMove(toParent: self)
 
-        context.traits.accessibility = .current()
-        traitOverrides.bContext = context
-
-        accessibilityObserver = BAccessibility.observe { [weak self] _, new in
-            guard let self else { return }
-            context.traits.accessibility = new
+        traitsObserver = BTraitsObserver { [weak self] traits in
+            self?.context.traits = traits
         }
+        context.traits = traitsObserver!.traits
+        traitOverrides.bContext = context
     }
 
     /// Creates a root container that hosts SwiftUI content.
@@ -75,7 +73,7 @@ public final class BRootViewController: UIViewController {
         child.view.frame = view.bounds
         view.addSubview(child.view)
 
-        accessibilityObserver?.start()
+        traitsObserver?.start()
     }
 
     override public func viewWillLayoutSubviews() {
@@ -88,5 +86,5 @@ public final class BRootViewController: UIViewController {
 
     private let child: UIViewController
 
-    private var accessibilityObserver: BAccessibility.Observer?
+    private var traitsObserver: BTraitsObserver?
 }
