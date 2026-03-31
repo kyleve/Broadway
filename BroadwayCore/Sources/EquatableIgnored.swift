@@ -31,3 +31,7 @@ import Foundation
         true
     }
 }
+
+extension EquatableIgnored: Hashable {
+    public func hash(into _: inout Hasher) {}
+}

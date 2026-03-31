@@ -6,6 +6,9 @@
 //
 
 import Foundation
+import UIKit
+
+// MARK: - BAccessibility + BTraitsValue
 
 extension BTraits {
     public var accessibility: BAccessibility {
@@ -19,7 +22,9 @@ extension BAccessibility: BTraitsValue {
         .init()
     }
 
-    @MainActor public static var initialValue: BAccessibility {
+    @MainActor public static func currentValue(
+        from _: UIViewController,
+    ) -> BAccessibility {
         .current()
     }
 
@@ -30,13 +35,26 @@ extension BAccessibility: BTraitsValue {
     }
 }
 
+// MARK: - BTraits
+
 /// A type-keyed container of ``BTraitsValue`` conforming values
 /// representing the current environment (accessibility, size classes, etc.).
 ///
-/// Traits are always present; accessing a type that hasn't been explicitly
-/// set returns its ``BTraitsValue/defaultValue``.
+/// Create a traits container with ``system`` for the built-in set of
+/// observed traits, or call ``register(_:)`` to add custom types.
+/// Accessing a type that hasn't been explicitly set returns
+/// its ``BTraitsValue/defaultValue``.
 public struct BTraits: Equatable, Hashable, @unchecked Sendable {
-    public init() {}
+    init() {}
+
+    /// A traits container pre-registered with all built-in system trait types.
+    @MainActor public static var system: BTraits {
+        var traits = BTraits()
+        traits.register(BAccessibility.self)
+        return traits
+    }
+
+    // MARK: Subscript
 
     /// Gets or sets the trait for the given type. Returns
     /// ``BTraitsValue/defaultValue`` if no value has been set.
@@ -58,26 +76,76 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
         }
     }
 
+    // MARK: Registration
+
+    /// Registers a ``BTraitsValue`` type so that ``readCurrentValues(from:)``
+    /// and ``BTraitsObserver`` know about it.
+    @MainActor public mutating func register<V: BTraitsValue>(_: V.Type) {
+        registrations.append(Registration(
+            id: TypeIdentifier(V.self),
+            readCurrentValue: { vc in AnyHashable(V.currentValue(from: vc)) },
+            createObserver: { onChange in
+                V.makeObserver { newValue in onChange(AnyHashable(newValue)) }
+            },
+        ))
+    }
+
+    /// Reads the live value for every registered trait type from the
+    /// given view controller hierarchy and stores it.
+    @MainActor public mutating func readCurrentValues(
+        from viewController: UIViewController,
+    ) {
+        for reg in registrations {
+            storage[reg.id] = reg.readCurrentValue(viewController)
+        }
+    }
+
+    // MARK: Internal
+
+    mutating func setValue(_ value: AnyHashable, for id: TypeIdentifier) {
+        storage[id] = value
+    }
+
+    struct Registration: @unchecked Sendable {
+        let id: TypeIdentifier
+        let readCurrentValue: @MainActor @Sendable (UIViewController) -> AnyHashable
+        let createObserver: @MainActor @Sendable (
+            @escaping @MainActor @Sendable (AnyHashable) -> Void
+        ) -> any BTraitsValueObserver
+    }
+
+    // MARK: Private
+
     @CopyOnWrite private var storage: [TypeIdentifier: AnyHashable] = [:]
+    @EquatableIgnored private(set) var registrations: [Registration] = []
 }
+
+// MARK: - BTraitsValue
 
 /// A hashable value that can be stored in ``BTraits``.
 ///
 /// Conforming types provide a ``defaultValue`` that is returned when
 /// the trait has not been explicitly set. Types that need live system
-/// observation override ``initialValue`` and ``makeObserver(onChange:)``
-/// to supply a snapshot and an observer.
+/// observation override ``currentValue(from:)`` and
+/// ``makeObserver(onChange:)`` to supply a snapshot and an observer.
 public protocol BTraitsValue: Hashable {
     associatedtype Observer: BTraitsValueObserver = NeverObserver
+
     static var defaultValue: Self { get }
-    @MainActor static var initialValue: Self { get }
+
+    /// Returns the current live value by reading from the view controller
+    /// hierarchy. Defaults to ``defaultValue``.
+    @MainActor static func currentValue(from viewController: UIViewController) -> Self
+
     @MainActor static func makeObserver(
         onChange: @MainActor @escaping @Sendable (Self) -> Void,
     ) -> Observer
 }
 
 extension BTraitsValue {
-    @MainActor public static var initialValue: Self {
+    @MainActor public static func currentValue(
+        from _: UIViewController,
+    ) -> Self {
         defaultValue
     }
 }

@@ -38,7 +38,7 @@ public final class BRootViewController: UIViewController {
 
     /// Creates a root container that embeds the given child view controller.
     public init(child: UIViewController) {
-        context = BContext()
+        context = BContext(traits: .system)
         self.child = child
 
         super.init(nibName: nil, bundle: nil)
@@ -46,7 +46,7 @@ public final class BRootViewController: UIViewController {
         addChild(child)
         child.didMove(toParent: self)
 
-        traitsObserver = BTraitsObserver { [weak self] traits in
+        traitsObserver = BTraitsObserver(traits: .system, from: self) { [weak self] traits in
             self?.context.traits = traits
         }
         context.traits = traitsObserver!.traits

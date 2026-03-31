@@ -4,15 +4,16 @@
 //
 
 import Foundation
+import UIKit
 
-/// Observes all registered ``BTraitsValue`` types, maintaining a
-/// live ``BTraits`` snapshot and notifying the caller when any
+/// Observes all trait types registered in a ``BTraits`` instance,
+/// maintaining a live snapshot and notifying the caller when any
 /// trait changes.
 ///
-/// Each ``BTraitsValue`` conformance declares its own
-/// ``BTraitsValue/Observer`` and ``BTraitsValue/makeObserver(onChange:)``.
-/// `BTraitsObserver` calls these generically and aggregates the
-/// individual observers behind a single `start()` / `stop()` lifecycle.
+/// The observer reads its configuration (which types to observe)
+/// from the ``BTraits`` value passed at init, reads the current
+/// values from the view controller hierarchy, and creates
+/// per-type observers via each type's ``BTraitsValue/makeObserver(onChange:)``.
 @MainActor
 public final class BTraitsObserver {
     // MARK: Public
@@ -23,15 +24,38 @@ public final class BTraitsObserver {
 
     // MARK: Initialization
 
+    /// - Parameter traits: The ``BTraits`` container whose registrations
+    ///   determine which types are observed.
+    /// - Parameter viewController: The view controller used to read
+    ///   initial trait values via ``BTraitsValue/currentValue(from:)``.
     /// - Parameter onChange: Called with the updated ``BTraits``
     ///   whenever any observed trait value changes.
     public init(
+        traits: BTraits,
+        from viewController: UIViewController,
         onChange: @MainActor @escaping @Sendable (BTraits) -> Void,
     ) {
-        traits = BTraits()
+        self.traits = traits
         self.onChange = onChange
 
-        observe(BAccessibility.self)
+        self.traits.readCurrentValues(from: viewController)
+
+        for reg in traits.registrations {
+            let regID = reg.id
+
+            let observer = reg.createObserver { [weak self] newValue in
+                guard let self else { return }
+
+                let old = self.traits
+                self.traits.setValue(newValue, for: regID)
+
+                if self.traits != old {
+                    onChange(self.traits)
+                }
+            }
+
+            observers.append(observer)
+        }
     }
 
     // MARK: Lifecycle
@@ -54,21 +78,4 @@ public final class BTraitsObserver {
 
     private let onChange: @MainActor @Sendable (BTraits) -> Void
     private var observers: [any BTraitsValueObserver] = []
-
-    private func observe<V: BTraitsValue>(_: V.Type) {
-        traits[V.self] = V.initialValue
-
-        let observer = V.makeObserver { [weak self] newValue in
-            guard let self else { return }
-
-            let old = traits
-            traits[V.self] = newValue
-
-            if traits != old {
-                onChange(traits)
-            }
-        }
-
-        observers.append(observer)
-    }
 }

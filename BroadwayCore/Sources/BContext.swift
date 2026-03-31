@@ -12,10 +12,14 @@ import Foundation
 /// ``BStylesheets`` cache. Updating `traits` or `themes` replaces the
 /// stylesheet cache so subsequent lookups produce fresh instances.
 public struct BContext: Equatable, Sendable {
-    public init(traits: BTraits = .init(), themes: BThemes = .init()) {
+    public init(traits: BTraits, themes: BThemes = .init()) {
         self.traits = traits
         self.themes = themes
         stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
+    }
+
+    init() {
+        self.init(traits: BTraits())
     }
 
     /// The current trait values (accessibility, size class, etc.).

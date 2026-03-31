@@ -49,10 +49,11 @@ import UIKit
         #expect(vc.traitOverrides.bContext == vc.context)
     }
 
-    @Test("Default bContext on UITraitCollection equals BContext()")
+    @Test("Default bContext on UITraitCollection has default traits")
     func defaultTraitCollectionContext() {
         let tc = UITraitCollection()
-        #expect(tc.bContext == BContext())
+        #expect(tc.bContext.traits.accessibility == BAccessibility())
+        #expect(tc.bContext.themes == BThemes())
     }
 
     @Test("Child inherits bContext after layout")
