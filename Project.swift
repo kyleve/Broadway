@@ -88,7 +88,6 @@ let project = Project(
             sources: ["BroadwayTesting/Sources/**"],
             dependencies: [
                 .target(name: "BroadwayCore"),
-                .xctest,
             ],
         ),
     ]
