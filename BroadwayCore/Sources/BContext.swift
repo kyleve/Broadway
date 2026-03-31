@@ -21,16 +21,14 @@ public struct BContext: Equatable, Sendable {
     /// The current trait values (accessibility, size class, etc.).
     public var traits: BTraits {
         didSet {
-            guard traits != oldValue else { return }
-            stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
+            stylesheets.traits = traits
         }
     }
 
     /// The current theme values.
     @CopyOnWrite public var themes: BThemes {
         didSet {
-            guard themes != oldValue else { return }
-            stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
+            stylesheets.themes = themes
         }
     }
 

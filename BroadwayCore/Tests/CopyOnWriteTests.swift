@@ -14,7 +14,7 @@ struct CopyOnWriteTests {
 
     @Test("Copying shares storage until mutation")
     func copySharesStorage() {
-        var a = CopyOnWrite(wrappedValue: [1, 2, 3])
+        let a = CopyOnWrite(wrappedValue: [1, 2, 3])
         var b = a
 
         // Both should read the same value.
@@ -70,8 +70,8 @@ struct CopyOnWriteTests {
 
     @Test("Unsafe mutation bypasses copy-on-write")
     func unsafeMutationBypassesCOW() {
-        var a = CopyOnWrite(wrappedValue: [1, 2, 3])
-        var b = a
+        let a = CopyOnWrite(wrappedValue: [1, 2, 3])
+        let b = a
 
         // Unsafe mutation on `b` should also affect `a`
         // since they share the same box.
@@ -134,7 +134,7 @@ struct CopyOnWriteTests {
             @CopyOnWrite var data: [Int]
         }
 
-        var a = Model(data: [1, 2, 3])
+        let a = Model(data: [1, 2, 3])
         var b = a
 
         b.data.append(4)
