@@ -118,11 +118,68 @@ struct BAccessibilityTests {
     }
 }
 
+// MARK: - Mock SettingsProvider
+
+private final class MockSettingsProvider: BAccessibility.SettingsProvider {
+    var isVoiceOverRunning = false
+    var isSwitchControlRunning = false
+    var isAssistiveTouchRunning = false
+    var isGuidedAccessEnabled = false
+    var isBoldTextEnabled = false
+    var isGrayscaleEnabled = false
+    var isInvertColorsEnabled = false
+    var isDarkerSystemColorsEnabled = false
+    var isReduceTransparencyEnabled = false
+    var shouldDifferentiateWithoutColor = false
+    var isOnOffSwitchLabelsEnabled = false
+    var buttonShapesEnabled = false
+    var isReduceMotionEnabled = false
+    var prefersCrossFadeTransitions = false
+    var isVideoAutoplayEnabled = false
+    var isMonoAudioEnabled = false
+    var isClosedCaptioningEnabled = false
+    var isSpeakScreenEnabled = false
+    var isSpeakSelectionEnabled = false
+    var isShakeToUndoEnabled = false
+}
+
+// MARK: - SettingsProvider Tests
+
+struct BAccessibilitySettingsProviderTests {
+    @Test("init(with:) reads all values from the provider")
+    func initFromProvider() {
+        let mock = MockSettingsProvider()
+        mock.isVoiceOverRunning = true
+        mock.isReduceMotionEnabled = true
+        mock.buttonShapesEnabled = true
+
+        let snapshot = BAccessibility(with: mock)
+
+        #expect(snapshot.isVoiceOverRunning == true)
+        #expect(snapshot.isReduceMotionEnabled == true)
+        #expect(snapshot.buttonShapesEnabled == true)
+        #expect(snapshot.isBoldTextEnabled == false)
+    }
+
+    @Test("current(with:) uses the provided settings")
+    func currentWithProvider() {
+        let mock = MockSettingsProvider()
+        mock.isBoldTextEnabled = true
+
+        let snapshot = BAccessibility.current(with: mock)
+
+        #expect(snapshot.isBoldTextEnabled == true)
+        #expect(snapshot.isVoiceOverRunning == false)
+    }
+}
+
+// MARK: - Observer Tests
+
 @MainActor struct BAccessibilityObserverTests {
     // MARK: - Factory
 
-    @Test("observeChanges returns an Observer")
-    func observeChangesFactory() {
+    @Test("observe returns an Observer")
+    func observeFactory() {
         let observer = BAccessibility.observe { _, _ in }
         _ = observer
     }
@@ -177,20 +234,6 @@ struct BAccessibilityTests {
 
     // MARK: - Injected NotificationCenter
 
-    @Test("Observer registers for all expected notifications on start")
-    func registersOnStart() {
-        let center = NotificationCenter()
-
-        let observer = BAccessibility.observe(on: center) { _, _ in }
-        observer.start()
-
-        // Post through injected center — observer should receive it without
-        // interfering with the default center.
-        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-
-        observer.stop()
-    }
-
     @Test("Observer does not respond to notifications from the default center when injected")
     func isolatedFromDefault() {
         let center = NotificationCenter()
@@ -214,77 +257,147 @@ struct BAccessibilityTests {
     @Test("Stop removes registrations from the injected center")
     func stopRemovesFromInjected() {
         let center = NotificationCenter()
+        let mock = MockSettingsProvider()
         var callCount = 0
 
-        let observer = BAccessibility.observe(on: center) { _, _ in
+        let observer = BAccessibility.observe(on: center, with: mock) { _, _ in
             callCount += 1
         }
         observer.start()
         observer.stop()
 
+        mock.isVoiceOverRunning = true
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(callCount == 0)
     }
 
-    @Test("observeChanges factory passes injected center through")
-    func factoryPassesCenter() {
+    // MARK: - Change Observation with Mock Provider
+
+    @Test("Fires onChange when provider values change")
+    func firesOnChange() {
         let center = NotificationCenter()
+        let mock = MockSettingsProvider()
         var callCount = 0
 
-        let observer = BAccessibility.observe(on: center) { _, _ in
+        let observer = BAccessibility.observe(on: center, with: mock) { _, _ in
             callCount += 1
         }
         observer.start()
 
-        NotificationCenter.default.post(
-            name: UIAccessibility.voiceOverStatusDidChangeNotification,
-            object: nil,
-        )
+        mock.isVoiceOverRunning = true
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
-        #expect(callCount == 0)
+        #expect(callCount == 1)
 
         observer.stop()
     }
 
-    // MARK: - Notification Behavior
+    @Test("onChange delivers correct old and new snapshots")
+    func deliversCorrectSnapshots() {
+        let center = NotificationCenter()
+        let mock = MockSettingsProvider()
+        var received: (old: BAccessibility, new: BAccessibility)?
 
-    @Test("Does not fire onChange when accessibility state has not changed")
+        let observer = BAccessibility.observe(on: center, with: mock) { old, new in
+            received = (old, new)
+        }
+        observer.start()
+
+        mock.isVoiceOverRunning = true
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(received?.old.isVoiceOverRunning == false)
+        #expect(received?.new.isVoiceOverRunning == true)
+
+        observer.stop()
+    }
+
+    @Test("Does not fire onChange when provider values have not changed")
     func noSpuriousCallback() {
         let center = NotificationCenter()
+        let mock = MockSettingsProvider()
         var callCount = 0
 
-        let observer = BAccessibility.observe(on: center) { _, _ in
+        let observer = BAccessibility.observe(on: center, with: mock) { _, _ in
             callCount += 1
         }
         observer.start()
 
-        center.post(
-            name: UIAccessibility.voiceOverStatusDidChangeNotification,
-            object: nil,
-        )
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(callCount == 0)
 
         observer.stop()
     }
 
-    @Test("Does not fire onChange after stop")
+    @Test("Sequential changes deliver sequential callbacks with updated values")
+    func sequentialChanges() {
+        let center = NotificationCenter()
+        let mock = MockSettingsProvider()
+        var snapshots: [(old: BAccessibility, new: BAccessibility)] = []
+
+        let observer = BAccessibility.observe(on: center, with: mock) { old, new in
+            snapshots.append((old, new))
+        }
+        observer.start()
+
+        mock.isVoiceOverRunning = true
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        mock.isReduceMotionEnabled = true
+        center.post(name: UIAccessibility.reduceMotionStatusDidChangeNotification, object: nil)
+
+        #expect(snapshots.count == 2)
+
+        #expect(snapshots[0].old.isVoiceOverRunning == false)
+        #expect(snapshots[0].new.isVoiceOverRunning == true)
+
+        #expect(snapshots[1].old.isReduceMotionEnabled == false)
+        #expect(snapshots[1].new.isReduceMotionEnabled == true)
+        #expect(snapshots[1].new.isVoiceOverRunning == true)
+
+        observer.stop()
+    }
+
+    @Test("Does not fire onChange after stop even when provider changes")
     func noCallbackAfterStop() {
         let center = NotificationCenter()
+        let mock = MockSettingsProvider()
         var callCount = 0
 
-        let observer = BAccessibility.observe(on: center) { _, _ in
+        let observer = BAccessibility.observe(on: center, with: mock) { _, _ in
             callCount += 1
         }
         observer.start()
         observer.stop()
 
-        center.post(
-            name: UIAccessibility.voiceOverStatusDidChangeNotification,
-            object: nil,
-        )
+        mock.isVoiceOverRunning = true
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(callCount == 0)
+    }
+
+    @Test("Restarting observer picks up current provider state")
+    func restartPicksUpCurrent() {
+        let center = NotificationCenter()
+        let mock = MockSettingsProvider()
+        var received: (old: BAccessibility, new: BAccessibility)?
+
+        let observer = BAccessibility.observe(on: center, with: mock) { old, new in
+            received = (old, new)
+        }
+
+        mock.isVoiceOverRunning = true
+        observer.start()
+
+        mock.isReduceMotionEnabled = true
+        center.post(name: UIAccessibility.reduceMotionStatusDidChangeNotification, object: nil)
+
+        #expect(received?.old.isVoiceOverRunning == true)
+        #expect(received?.old.isReduceMotionEnabled == false)
+        #expect(received?.new.isReduceMotionEnabled == true)
+
+        observer.stop()
     }
 }
