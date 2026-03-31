@@ -7,45 +7,6 @@
 
 import Foundation
 
-/// A type that computes derived style values from a ``SlicingContext``.
-///
-/// Conform to this protocol to define a stylesheet that is lazily created
-/// and cached by ``BStylesheets``. A stylesheet's `init` receives the
-/// current themes and may access other stylesheets through the context;
-/// circular dependencies are detected at runtime and throw a
-/// ``CyclicDependencyError``.
-public protocol BStylesheet: Equatable {
-    init(context: SlicingContext) throws
-}
-
-/// Errors thrown by ``BStylesheets/get(_:)`` during stylesheet resolution.
-public enum StylesheetError: Error, CustomStringConvertible {
-    /// A stylesheet's initialization created a dependency cycle.
-    ///
-    /// The associated `path` describes the cycle, e.g. `["A", "B", "A"]`
-    /// means `A` depends on `B` which depends on `A`.
-    case cyclicDependency(path: [String])
-
-    /// A stylesheet's `init(context:)` threw a non-stylesheet error.
-    case creationFailed(type: String, underlying: any Error)
-
-    public var description: String {
-        switch self {
-            case let .cyclicDependency(path):
-                "Stylesheet dependency cycle: \(path.joined(separator: " → "))"
-            case let .creationFailed(type, underlying):
-                "Failed to create stylesheet '\(type)': \(underlying)"
-        }
-    }
-}
-
-/// The context passed to ``BStylesheet/init(context:)`` during lazy creation,
-/// providing access to the current themes and other stylesheets.
-public struct SlicingContext {
-    public var themes: BThemes
-    public var stylesheets: BStylesheets
-}
-
 /// A keyed cache of ``BStylesheet`` instances, scoped to a specific
 /// combination of traits and themes. Stylesheets are created lazily on
 /// first access and cached for subsequent lookups with the same key.

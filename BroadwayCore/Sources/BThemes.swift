@@ -39,12 +39,7 @@ public struct BThemes: Equatable, Hashable, @unchecked Sendable {
 
         set {
             let id = TypeIdentifier(Theme.self)
-
-            if newValue == Theme.defaultValue {
-                themes[id] = nil
-            } else {
-                themes[id] = AnyHashable(newValue)
-            }
+            themes[id] = AnyHashable(newValue)
         }
     }
 
