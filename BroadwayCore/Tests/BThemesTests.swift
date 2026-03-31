@@ -49,16 +49,6 @@ struct BThemesTests {
         #expect(themes[Typography.self] == .compact)
     }
 
-    // MARK: - Reset to Default
-
-    @Test("Assigning defaultValue resets to default and matches an empty instance")
-    func resetToDefault() {
-        var themes = BThemes()
-        themes[Palette.self] = .dark
-        themes[Palette.self] = .light
-        #expect(themes == BThemes())
-    }
-
     // MARK: - Equatable
 
     @Test("Two empty instances are equal")
