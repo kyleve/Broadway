@@ -42,30 +42,21 @@ Or open the generated project in Xcode and run tests with **Cmd+U**.
 
 ```
 Broadway/
-├── .mise.toml                          # mise tool versions (pins Tuist)
-├── Tuist.swift                         # Tuist configuration
-├── Project.swift                       # Tuist project manifest
 ├── BroadwayCatalog/
-│   ├── Sources/                        # Catalog app source files
-│   │   ├── BroadwayApp.swift           # @main app entry point
-│   │   └── ContentView.swift           # Root SwiftUI view
-│   ├── Resources/                      # Asset catalogs, etc.
-│   └── Tests/                          # Catalog app unit tests
-│       └── BroadwayCatalogTests.swift
+│   ├── Sources/            # Catalog app source code
+│   ├── Resources/          # Asset catalogs, etc.
+│   └── Tests/              # Catalog app unit tests
 ├── BroadwayUI/
-│   ├── Sources/                        # UI framework source files
-│   │   └── BroadwayUI.swift
-│   └── Tests/                          # UI framework unit tests
-│       └── BroadwayUITests.swift
+│   ├── Sources/            # UI framework source code
+│   └── Tests/              # UI framework unit tests
 ├── BroadwayCore/
-│   ├── Sources/                        # Core framework source files
-│   │   └── BroadwayCore.swift
-│   └── Tests/                          # Core framework unit tests
-│       └── BroadwayCoreTests.swift
-├── Plans/                              # Archived implementation plans
-├── ide                                 # Dev script (generate project)
-├── LICENSE                             # Apache 2.0
-└── README.md
+│   ├── Sources/            # Core framework source code
+│   └── Tests/              # Core framework unit tests
+├── BroadwayTestHost/
+│   └── Sources/            # Minimal test host app
+├── BroadwayTesting/
+│   └── Sources/            # Shared test utilities
+└── Plans/                  # Archived implementation plans
 ```
 
 ## Targets
@@ -78,6 +69,8 @@ Broadway/
 | **BroadwayUITests** | Unit Tests | iOS, Mac Catalyst |
 | **BroadwayCore** | Framework | iOS, Mac Catalyst |
 | **BroadwayCoreTests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayTestHost** | App | iOS, Mac Catalyst |
+| **BroadwayTesting** | Framework | iOS, Mac Catalyst |
 
 ## License
 

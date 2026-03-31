@@ -10,55 +10,25 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 
 ```
 /
-├── .githooks/pre-commit                # Git pre-commit hook (SwiftFormat lint)
-├── .mise.toml                          # mise tool versions (pins Tuist, SwiftFormat)
-├── .swiftformat                        # SwiftFormat configuration
-├── Tuist.swift                         # Tuist global configuration
-├── Project.swift                       # Tuist project manifest (root level)
+├── .githooks/              # Git hooks (pre-commit SwiftFormat lint)
 ├── BroadwayCatalog/
-│   ├── Sources/                        # Catalog app source code (Swift / SwiftUI)
-│   │   ├── BroadwayApp.swift           # @main entry point
-│   │   └── ContentView.swift           # Root view
-│   ├── Resources/                      # Bundled resources (assets, localization, etc.)
-│   └── Tests/                          # Catalog app unit tests (Swift Testing)
-│       └── BroadwayCatalogTests.swift
+│   ├── Sources/            # Catalog app source code (Swift / SwiftUI)
+│   ├── Resources/          # Bundled resources (assets, localization, etc.)
+│   └── Tests/              # Catalog app unit tests
 ├── BroadwayUI/
-│   ├── Sources/                        # UI framework source code
-│   │   └── BRootViewController.swift   # Root container VC (context + trait propagation)
-│   └── Tests/                          # UI framework unit tests (Swift Testing)
-│       └── BRootViewControllerTests.swift
-├── BroadwayTestHost/
-│   └── Sources/                        # Minimal app used as test host for unit tests
-│       └── TestHostApp.swift           # @main entry point (empty window)
-├── BroadwayTesting/
-│   └── Sources/                        # Test utilities framework (depends on BroadwayCore)
-│       └── BroadwayTesting.swift       # Module entry point
+│   ├── Sources/            # UI framework source code
+│   └── Tests/              # UI framework unit tests
 ├── BroadwayCore/
-│   ├── Sources/                        # Core framework source code
-│   │   ├── AnyEquatable.swift          # Type-erased Equatable wrapper
-│   │   ├── BAccessibility.swift        # Accessibility snapshot + Observer
-│   │   ├── BContext.swift              # Root environment container
-│   │   ├── BContext+UITraits.swift     # UITraitDefinition bridge (#if canImport(UIKit))
-│   │   ├── BStylesheets.swift          # Lazy cached stylesheet resolver
-│   │   ├── BThemes.swift               # Type-keyed theme container
-│   │   ├── BTraits.swift               # Type-keyed trait container
-│   │   ├── CopyOnWrite.swift           # COW property wrapper
-│   │   └── TypeIdentifier.swift        # Lightweight type-keyed identifier
-│   └── Tests/                          # Core framework unit tests (Swift Testing)
-│       ├── AnyEquatableTests.swift
-│       ├── BAccessibilityTests.swift
-│       ├── BContextTests.swift
-│       ├── BThemesTests.swift
-│       ├── BTraitsTests.swift
-│       ├── CopyOnWriteTests.swift
-│       └── TypeIdentifierTests.swift
-├── Plans/                              # Archived implementation plans (see index below)
-├── swiftformat                         # Run SwiftFormat (--lint to check only)
-├── ide                                 # Dev script (installs hooks, runs tuist generate)
-├── LICENSE                             # Apache 2.0
-├── README.md                           # Project overview and setup instructions
-└── AGENTS.md                           # This file
+│   ├── Sources/            # Core framework source code
+│   └── Tests/              # Core framework unit tests
+├── BroadwayTestHost/
+│   └── Sources/            # Minimal test host app
+├── BroadwayTesting/
+│   └── Sources/            # Shared test utilities
+└── Plans/                  # Archived implementation plans
 ```
+
+Key root files: `Project.swift` (Tuist manifest), `Tuist.swift` (Tuist config), `.mise.toml` (tool versions), `.swiftformat` (style config), `ide` and `swiftformat` (dev scripts).
 
 ## Build System
 
