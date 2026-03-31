@@ -25,7 +25,7 @@ extension BAccessibility: BTraitsValue {
 ///
 /// Traits are always present; accessing a type that hasn't been explicitly
 /// set returns its ``BTraitsValue/defaultValue``.
-public struct BTraits: Equatable, Hashable, Sendable {
+public struct BTraits: Equatable, Hashable, @unchecked Sendable {
     public init() {}
 
     /// Gets or sets the trait for the given type. Returns

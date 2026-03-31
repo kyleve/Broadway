@@ -21,7 +21,7 @@ public protocol BTheme: Equatable, Hashable {
 ///
 /// Themes are always present; accessing a type that hasn't been explicitly
 /// set returns its ``BTheme/defaultValue``.
-public struct BThemes: Equatable, Hashable, Sendable {
+public struct BThemes: Equatable, Hashable, @unchecked Sendable {
     public init() {}
 
     /// Gets or sets the theme for the given type. Returns
