@@ -89,15 +89,6 @@ public final class BRootViewController: UIViewController {
     private func setUpIfNeeded() {
         guard child == nil else { return }
 
-        let child = makeChild()
-        self.child = child
-
-        addChild(child)
-        child.didMove(toParent: self)
-
-        child.view.frame = view.bounds
-        view.addSubview(child.view)
-
         let observer = BTraitsObserver(traits: .system, from: self) { [weak self] traits in
             self?.context?.traits = traits
         }
@@ -106,5 +97,14 @@ public final class BRootViewController: UIViewController {
         context = BContext(traits: observer.traits)
 
         observer.start()
+
+        let child = makeChild()
+        self.child = child
+
+        addChild(child)
+        child.didMove(toParent: self)
+
+        child.view.frame = view.bounds
+        view.addSubview(child.view)
     }
 }

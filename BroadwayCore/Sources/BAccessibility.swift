@@ -119,6 +119,24 @@ public struct BAccessibility: Equatable, Hashable, Sendable {
     }
 }
 
+extension BAccessibility: BTraitsValue {
+    public static var defaultValue: Self {
+        .init()
+    }
+
+    @MainActor public static func currentValue(
+        from _: UIViewController,
+    ) -> BAccessibility {
+        .current()
+    }
+
+    @MainActor public static func makeObserver(
+        onChange: @MainActor @escaping @Sendable (BAccessibility) -> Void,
+    ) -> BAccessibility.Observer {
+        .init { _, new in onChange(new) }
+    }
+}
+
 extension BAccessibility {
     /// A provider which returns the current accessibility settings on the device.
     ///

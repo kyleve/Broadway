@@ -17,24 +17,6 @@ extension BTraits {
     }
 }
 
-extension BAccessibility: BTraitsValue {
-    public static var defaultValue: Self {
-        .init()
-    }
-
-    @MainActor public static func currentValue(
-        from _: UIViewController,
-    ) -> BAccessibility {
-        .current()
-    }
-
-    @MainActor public static func makeObserver(
-        onChange: @MainActor @escaping @Sendable (BAccessibility) -> Void,
-    ) -> BAccessibility.Observer {
-        .init { _, new in onChange(new) }
-    }
-}
-
 // MARK: - BTraits
 
 /// A type-keyed container of ``BTraitsValue`` conforming values
