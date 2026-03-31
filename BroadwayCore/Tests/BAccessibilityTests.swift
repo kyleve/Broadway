@@ -1,6 +1,7 @@
 @testable import BroadwayCore
 import Foundation
 import Testing
+import UIKit
 
 struct BAccessibilityTests {
     // MARK: - Default Initialization
@@ -117,179 +118,173 @@ struct BAccessibilityTests {
     }
 }
 
-#if canImport(UIKit)
+@MainActor struct BAccessibilityObserverTests {
+    // MARK: - Factory
 
-    import UIKit
-
-    @MainActor struct BAccessibilityObserverTests {
-        // MARK: - Factory
-
-        @Test("observeChanges returns an Observer")
-        func observeChangesFactory() {
-            let observer = BAccessibility.observeChanges { _, _ in }
-            _ = observer
-        }
-
-        // MARK: - Lifecycle
-
-        @Test("start and stop complete without error")
-        func startStop() {
-            let observer = BAccessibility.Observer { _, _ in }
-            observer.start()
-            observer.stop()
-        }
-
-        @Test("Calling start twice is safe")
-        func doubleStart() {
-            let observer = BAccessibility.Observer { _, _ in }
-            observer.start()
-            observer.start()
-            observer.stop()
-        }
-
-        @Test("Calling stop without start is safe")
-        func stopWithoutStart() {
-            let observer = BAccessibility.Observer { _, _ in }
-            observer.stop()
-        }
-
-        @Test("Calling stop twice is safe")
-        func doubleStop() {
-            let observer = BAccessibility.Observer { _, _ in }
-            observer.start()
-            observer.stop()
-            observer.stop()
-        }
-
-        @Test("Can restart after stopping")
-        func restart() {
-            let observer = BAccessibility.Observer { _, _ in }
-            observer.start()
-            observer.stop()
-            observer.start()
-            observer.stop()
-        }
-
-        @Test("Deallocation after start does not crash")
-        func deallocAfterStart() {
-            var observer: BAccessibility.Observer? = BAccessibility.Observer { _, _ in }
-            observer?.start()
-            observer = nil
-            _ = observer
-        }
-
-        // MARK: - Injected NotificationCenter
-
-        @Test("Observer registers for all expected notifications on start")
-        func registersOnStart() {
-            let center = NotificationCenter()
-
-            let observer = BAccessibility.Observer(notificationCenter: center) { _, _ in }
-            observer.start()
-
-            // Post through injected center — observer should receive it without
-            // interfering with the default center.
-            center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-
-            observer.stop()
-        }
-
-        @Test("Observer does not respond to notifications from the default center when injected")
-        func isolatedFromDefault() {
-            let center = NotificationCenter()
-            var callCount = 0
-
-            let observer = BAccessibility.Observer(notificationCenter: center) { _, _ in
-                callCount += 1
-            }
-            observer.start()
-
-            NotificationCenter.default.post(
-                name: UIAccessibility.voiceOverStatusDidChangeNotification,
-                object: nil,
-            )
-
-            #expect(callCount == 0)
-
-            observer.stop()
-        }
-
-        @Test("Stop removes registrations from the injected center")
-        func stopRemovesFromInjected() {
-            let center = NotificationCenter()
-            var callCount = 0
-
-            let observer = BAccessibility.Observer(notificationCenter: center) { _, _ in
-                callCount += 1
-            }
-            observer.start()
-            observer.stop()
-
-            center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-
-            #expect(callCount == 0)
-        }
-
-        @Test("observeChanges factory passes injected center through")
-        func factoryPassesCenter() {
-            let center = NotificationCenter()
-            var callCount = 0
-
-            let observer = BAccessibility.observeChanges(notificationCenter: center) { _, _ in
-                callCount += 1
-            }
-            observer.start()
-
-            NotificationCenter.default.post(
-                name: UIAccessibility.voiceOverStatusDidChangeNotification,
-                object: nil,
-            )
-
-            #expect(callCount == 0)
-
-            observer.stop()
-        }
-
-        // MARK: - Notification Behavior
-
-        @Test("Does not fire onChange when accessibility state has not changed")
-        func noSpuriousCallback() {
-            let center = NotificationCenter()
-            var callCount = 0
-
-            let observer = BAccessibility.Observer(notificationCenter: center) { _, _ in
-                callCount += 1
-            }
-            observer.start()
-
-            center.post(
-                name: UIAccessibility.voiceOverStatusDidChangeNotification,
-                object: nil,
-            )
-
-            #expect(callCount == 0)
-
-            observer.stop()
-        }
-
-        @Test("Does not fire onChange after stop")
-        func noCallbackAfterStop() {
-            let center = NotificationCenter()
-            var callCount = 0
-
-            let observer = BAccessibility.Observer(notificationCenter: center) { _, _ in
-                callCount += 1
-            }
-            observer.start()
-            observer.stop()
-
-            center.post(
-                name: UIAccessibility.voiceOverStatusDidChangeNotification,
-                object: nil,
-            )
-
-            #expect(callCount == 0)
-        }
+    @Test("observeChanges returns an Observer")
+    func observeChangesFactory() {
+        let observer = BAccessibility.observe { _, _ in }
+        _ = observer
     }
 
-#endif
+    // MARK: - Lifecycle
+
+    @Test("start and stop complete without error")
+    func startStop() {
+        let observer = BAccessibility.observe { _, _ in }
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Calling start twice is safe")
+    func doubleStart() {
+        let observer = BAccessibility.observe { _, _ in }
+        observer.start()
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Calling stop without start is safe")
+    func stopWithoutStart() {
+        let observer = BAccessibility.observe { _, _ in }
+        observer.stop()
+    }
+
+    @Test("Calling stop twice is safe")
+    func doubleStop() {
+        let observer = BAccessibility.observe { _, _ in }
+        observer.start()
+        observer.stop()
+        observer.stop()
+    }
+
+    @Test("Can restart after stopping")
+    func restart() {
+        let observer = BAccessibility.observe { _, _ in }
+        observer.start()
+        observer.stop()
+        observer.start()
+        observer.stop()
+    }
+
+    @Test("Deallocation after start does not crash")
+    func deallocAfterStart() {
+        var observer: BAccessibility.Observer? = BAccessibility.observe { _, _ in }
+        observer?.start()
+        observer = nil
+        _ = observer
+    }
+
+    // MARK: - Injected NotificationCenter
+
+    @Test("Observer registers for all expected notifications on start")
+    func registersOnStart() {
+        let center = NotificationCenter()
+
+        let observer = BAccessibility.observe(on: center) { _, _ in }
+        observer.start()
+
+        // Post through injected center — observer should receive it without
+        // interfering with the default center.
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        observer.stop()
+    }
+
+    @Test("Observer does not respond to notifications from the default center when injected")
+    func isolatedFromDefault() {
+        let center = NotificationCenter()
+        var callCount = 0
+
+        let observer = BAccessibility.observe(on: center) { _, _ in
+            callCount += 1
+        }
+        observer.start()
+
+        NotificationCenter.default.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil,
+        )
+
+        #expect(callCount == 0)
+
+        observer.stop()
+    }
+
+    @Test("Stop removes registrations from the injected center")
+    func stopRemovesFromInjected() {
+        let center = NotificationCenter()
+        var callCount = 0
+
+        let observer = BAccessibility.observe(on: center) { _, _ in
+            callCount += 1
+        }
+        observer.start()
+        observer.stop()
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(callCount == 0)
+    }
+
+    @Test("observeChanges factory passes injected center through")
+    func factoryPassesCenter() {
+        let center = NotificationCenter()
+        var callCount = 0
+
+        let observer = BAccessibility.observe(on: center) { _, _ in
+            callCount += 1
+        }
+        observer.start()
+
+        NotificationCenter.default.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil,
+        )
+
+        #expect(callCount == 0)
+
+        observer.stop()
+    }
+
+    // MARK: - Notification Behavior
+
+    @Test("Does not fire onChange when accessibility state has not changed")
+    func noSpuriousCallback() {
+        let center = NotificationCenter()
+        var callCount = 0
+
+        let observer = BAccessibility.observe(on: center) { _, _ in
+            callCount += 1
+        }
+        observer.start()
+
+        center.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil,
+        )
+
+        #expect(callCount == 0)
+
+        observer.stop()
+    }
+
+    @Test("Does not fire onChange after stop")
+    func noCallbackAfterStop() {
+        let center = NotificationCenter()
+        var callCount = 0
+
+        let observer = BAccessibility.observe(on: center) { _, _ in
+            callCount += 1
+        }
+        observer.start()
+        observer.stop()
+
+        center.post(
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil,
+        )
+
+        #expect(callCount == 0)
+    }
+}
