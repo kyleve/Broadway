@@ -30,15 +30,14 @@ struct AnyEquatable: Equatable, @unchecked Sendable {
 
     /// Creates a type-erased equatable wrapper around the given value.
     init<Value: Equatable>(_ typedValue: Value) {
-        let base: Any = typedValue
-        self.base = base
+        base = typedValue
 
         compare = { other in
-            guard let lhs = base as? Value, let rhs = other.base as? Value else {
+            guard let rhs = other.base as? Value else {
                 return false
             }
 
-            return lhs == rhs
+            return typedValue == rhs
         }
     }
 

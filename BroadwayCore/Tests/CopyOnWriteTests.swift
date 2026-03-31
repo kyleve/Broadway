@@ -1,5 +1,5 @@
 import Testing
-@_spi(Internal) @testable import BroadwayCore
+@_spi(CopyOnWrite) @testable import BroadwayCore
 
 struct CopyOnWriteTests {
     // MARK: - Initialization
