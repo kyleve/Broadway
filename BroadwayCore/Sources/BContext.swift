@@ -20,7 +20,7 @@ public struct BContext: Equatable, Sendable {
         baseTraits = traits
         traitOverrides = overrides
         self.themes = themes
-        stylesheets = BStylesheets(config: .init(traits: traits, themes: themes))
+        stylesheets = BStylesheets(traits: traits, themes: themes)
     }
 
     init() {
@@ -52,5 +52,5 @@ public struct BContext: Equatable, Sendable {
     }
 
     /// Lazily-populated stylesheet cache, scoped to the current traits and themes.
-    @CopyOnWrite public private(set) var stylesheets: BStylesheets
+    @EquatableIgnored @CopyOnWrite public private(set) var stylesheets: BStylesheets
 }

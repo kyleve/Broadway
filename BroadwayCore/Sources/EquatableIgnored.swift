@@ -20,7 +20,7 @@ import Foundation
 /// }
 /// ```
 /// In this example, `cache` will never affect the equality of two `Example` instances.
-@propertyWrapper public struct EquatableIgnored<Value>: Equatable, Hashable {
+@propertyWrapper public struct EquatableIgnored<Value>: Equatable, Hashable, @unchecked Sendable {
     public var wrappedValue: Value
 
     public init(wrappedValue: Value) {

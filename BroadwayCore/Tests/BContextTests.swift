@@ -206,7 +206,7 @@ struct BContextStylesheetTests {
 
     @Test("Circular stylesheet dependency throws cyclicDependency")
     func cycleThrows() {
-        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(CycleA.self)
@@ -215,7 +215,7 @@ struct BContextStylesheetTests {
 
     @Test("cyclicDependency error includes the dependency path")
     func cyclePath() {
-        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(CycleA.self)
@@ -237,7 +237,7 @@ struct BContextStylesheetTests {
 
     @Test("Self-referencing stylesheet throws cyclicDependency")
     func selfCycle() {
-        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(SelfCycle.self)
@@ -246,7 +246,7 @@ struct BContextStylesheetTests {
 
     @Test("Three-node cycle throws cyclicDependency with full path")
     func threeNodeCycle() {
-        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(ThreeNodeCycleA.self)
@@ -261,7 +261,7 @@ struct BContextStylesheetTests {
 
     @Test("Non-cycle error wraps in creationFailed")
     func nonCycleThrow() {
-        let stylesheets = BStylesheets(config: .init(traits: .init(), themes: .init()))
+        let stylesheets = BStylesheets(traits: .init(), themes: .init())
 
         let error = #expect(throws: StylesheetError.self) {
             _ = try stylesheets.get(FailingStylesheet.self)
@@ -276,10 +276,10 @@ struct BContextStylesheetTests {
     func setAndGet() throws {
         var themes = BThemes()
         themes[ColorTheme.self] = .dark
-        let source = BStylesheets(config: .init(traits: .init(), themes: themes))
+        let source = BStylesheets(traits: .init(), themes: themes)
         let sheet = try source.get(TestStylesheet.self)
 
-        var target = BStylesheets(config: .init(traits: .init(), themes: themes))
+        var target = BStylesheets(traits: .init(), themes: themes)
         target.set(sheet)
 
         let retrieved = try target.get(TestStylesheet.self)
