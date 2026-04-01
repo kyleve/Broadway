@@ -8,6 +8,20 @@
 import Foundation
 import UIKit
 
+extension BTraits {
+    public var accessibility: BAccessibility {
+        get { self[BAccessibility.self] }
+        set { self[BAccessibility.self] = newValue }
+    }
+}
+
+extension BTraits.Overrides {
+    public var accessibility: BAccessibility? {
+        get { self[BAccessibility.self] }
+        set { self[BAccessibility.self] = newValue }
+    }
+}
+
 /// A snapshot of the device's current accessibility settings.
 ///
 /// Each property mirrors a corresponding `UIAccessibility` class property.

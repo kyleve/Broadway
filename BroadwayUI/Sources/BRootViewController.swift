@@ -89,9 +89,13 @@ public final class BRootViewController: UIViewController {
     private func setUpIfNeeded() {
         guard child == nil else { return }
 
+        // TODO: Walk up the tree and don't make an observer if we're nested in another root
+        // further up the tree.
+
         let observer = BTraitsObserver(traits: .system, from: self) { [weak self] traits in
-            self?.context?.traits = traits
+            self?.context?.baseTraits = traits
         }
+
         traitsObserver = observer
 
         context = BContext(traits: observer.traits)

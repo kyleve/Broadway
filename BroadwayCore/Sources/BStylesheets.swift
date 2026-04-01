@@ -47,7 +47,11 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
     ///   a dependency cycle, or ``StylesheetError/creationFailed(type:underlying:)``
     ///   if the stylesheet's initializer throws.
     public func get<Stylesheet: BStylesheet>(_: Stylesheet.Type) throws(StylesheetError) -> Stylesheet {
-        let key = Key(stylesheet: .init(Stylesheet.self), traits: traits, themes: themes)
+        let key = Key(
+            stylesheet: .init(Stylesheet.self),
+            traits: traits,
+            themes: themes,
+        )
 
         guard let value = cache[key], let value = value.base as? Stylesheet else {
             let id = TypeIdentifier(Stylesheet.self)

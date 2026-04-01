@@ -8,15 +8,6 @@
 import Foundation
 import UIKit
 
-// MARK: - BAccessibility + BTraitsValue
-
-extension BTraits {
-    public var accessibility: BAccessibility {
-        get { self[BAccessibility.self] }
-        set { self[BAccessibility.self] = newValue }
-    }
-}
-
 // MARK: - BTraits
 
 /// A type-keyed container of ``BTraitsValue`` conforming values
@@ -32,7 +23,11 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
     /// A traits container pre-registered with all built-in system trait types.
     @MainActor public static var system: BTraits {
         var traits = BTraits()
+
         traits.register(BAccessibility.self)
+        traits.register(BMode.self)
+        traits.register(BContentSizeCategory.self)
+
         return traits
     }
 
@@ -56,6 +51,20 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
 
             storage[id] = AnyHashable(newValue)
         }
+    }
+
+    // MARK: Applying Overrides
+
+    public mutating func merge(with overrides: Overrides) {
+        for (id, value) in overrides.values {
+            storage[id] = value
+        }
+    }
+
+    public func merging(with overrides: Overrides) -> BTraits {
+        var copy = self
+        copy.merge(with: overrides)
+        return copy
     }
 
     // MARK: Registration

@@ -156,7 +156,7 @@ struct BContextStylesheetTests {
 
         let before = try context.stylesheets.get(TestStylesheet.self)
 
-        context.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
+        context.baseTraits.accessibility = BAccessibility(isVoiceOverRunning: true)
 
         let after = try context.stylesheets.get(TestStylesheet.self)
 
@@ -294,7 +294,7 @@ struct BContextStylesheetTests {
         _ = try context.stylesheets.get(CountingStylesheet.self)
         #expect(CountingStylesheet.initCount == 1)
 
-        context.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
+        context.baseTraits.accessibility = BAccessibility(isVoiceOverRunning: true)
         _ = try context.stylesheets.get(CountingStylesheet.self)
         #expect(CountingStylesheet.initCount == 2)
     }
@@ -311,7 +311,7 @@ struct BContextTests {
     @Test("Contexts with different traits are not equal")
     func traitInequality() {
         var a = BContext()
-        a.traits.accessibility = BAccessibility(isVoiceOverRunning: true)
+        a.baseTraits.accessibility = BAccessibility(isVoiceOverRunning: true)
         #expect(a != BContext())
     }
 
@@ -326,7 +326,7 @@ struct BContextTests {
     func traitPropagation() {
         var context = BContext()
         let accessibility = BAccessibility(isVoiceOverRunning: true)
-        context.traits.accessibility = accessibility
+        context.baseTraits.accessibility = accessibility
         #expect(context.stylesheets.traits.accessibility == accessibility)
     }
 
