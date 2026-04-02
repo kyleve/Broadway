@@ -42,7 +42,7 @@ remove_if_exists() {
     fi
 }
 
-# --- Generate from AGENTS.md files ---
+# --- Generate CLAUDE.md from AGENTS.md files ---
 
 while IFS= read -r -d '' agents_file; do
     dir="$(dirname "$agents_file")"
@@ -53,20 +53,6 @@ while IFS= read -r -d '' agents_file; do
     content="$(printf '%s\n\n%s' "$MARKER" "$(cat "$agents_file")")"
     write_if_changed "$claude_path" "$content"
     echo "$claude_path" >> "$expected_files"
-
-    if [ -n "$rel_dir" ]; then
-        mdc_name="${rel_dir//\//-}"
-        mdc_path="$REPO_ROOT/.cursor/rules/${mdc_name}.mdc"
-        mdc_content="$(printf '%s\n%s\n%s\n%s\n%s\n\n%s' \
-            "---" \
-            "description: \"Generated from ${rel_dir}/AGENTS.md — do not edit directly\"" \
-            "globs: [\"${rel_dir}/**\"]" \
-            "alwaysApply: false" \
-            "---" \
-            "$(cat "$agents_file")")"
-        write_if_changed "$mdc_path" "$mdc_content"
-        echo "$mdc_path" >> "$expected_files"
-    fi
 done < <(find "$REPO_ROOT" -name "AGENTS.md" \
     -not -path "*/Derived/*" \
     -not -path "*/.build/*" \
@@ -89,18 +75,6 @@ done < <(find "$REPO_ROOT" -name "CLAUDE.md" \
     -not -path "*/.git/*" \
     -print0 2>/dev/null || true)
 
-# --- Clean stale .mdc files ---
-
-if [ -d "$REPO_ROOT/.cursor/rules" ]; then
-    while IFS= read -r -d '' file; do
-        if ! grep -qxF "$file" "$expected_files"; then
-            if head -n5 "$file" | grep -qF "AGENTS.md — do not edit directly"; then
-                remove_if_exists "$file"
-            fi
-        fi
-    done < <(find "$REPO_ROOT/.cursor/rules" -name "*.mdc" -print0 2>/dev/null || true)
-fi
-
 # --- Sync .agents/skills → .claude/skills ---
 
 if [ -d "$REPO_ROOT/.agents/skills" ]; then
@@ -122,6 +96,5 @@ fi
 if [ "$GIT_ADD" = true ] && [ "$changed" = true ]; then
     git add -A -- 'CLAUDE.md' 2>/dev/null || true
     git add -A -- '*/CLAUDE.md' 2>/dev/null || true
-    git add -A -- '.cursor/rules' 2>/dev/null || true
     git add -A -- '.claude/skills' 2>/dev/null || true
 fi

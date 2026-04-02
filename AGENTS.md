@@ -54,7 +54,7 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 │       └── TypeIdentifierTests.swift
 ├── Plans/                              # Archived implementation plans (see index below)
 ├── swiftformat                         # Run SwiftFormat (--lint to check only)
-├── sync-agents                         # Generate CLAUDE.md + .cursor/rules from AGENTS.md
+├── sync-agents                         # Generate CLAUDE.md + .claude/skills from AGENTS.md
 ├── ide                                 # Dev script (installs hooks, runs tuist generate)
 ├── LICENSE                             # Apache 2.0
 ├── README.md                           # Project overview and setup instructions
@@ -80,13 +80,12 @@ Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The X
 
 ## Agent Instructions Sync
 
-`AGENTS.md` is the source of truth for AI agent instructions. Cursor and Codex read it natively, but Claude Code uses `CLAUDE.md` and Cursor uses `.cursor/rules/*.mdc` for directory-scoped rules.
+`AGENTS.md` is the source of truth for AI agent instructions. Cursor and Codex read nested `AGENTS.md` files natively. Claude Code uses `CLAUDE.md` for instructions and `.claude/skills/` for skills.
 
-- Run `./sync-agents` to generate `CLAUDE.md` and `.cursor/rules/*.mdc` files from all `AGENTS.md` files in the repo.
-- The root `AGENTS.md` produces only `CLAUDE.md` (Cursor reads `AGENTS.md` directly).
-- Nested `AGENTS.md` files produce both a `CLAUDE.md` in the same directory and a glob-scoped `.mdc` rule under `.cursor/rules/`.
-- Generated files contain a marker comment on the first line. The script uses this marker to clean up stale files on subsequent runs.
-- Re-run `./sync-agents` after adding, editing, or removing any `AGENTS.md` file.
+- Run `./sync-agents` to generate `CLAUDE.md` files from all `AGENTS.md` files and sync `.agents/skills/` to `.claude/skills/`.
+- Generated `CLAUDE.md` files contain a marker comment on the first line. The script uses this marker to clean up stale files on subsequent runs.
+- Skills live in `.agents/skills/` (read natively by Cursor and Codex) and are copied to `.claude/skills/` for Claude Code.
+- The pre-commit hook runs `./sync-agents --git-add` automatically to keep generated files in sync.
 
 ## Targets
 

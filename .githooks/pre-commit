@@ -15,5 +15,5 @@ if [ -n "$staged" ]; then
       | xargs -0 git add
 fi
 
-# Sync AGENTS.md + .agents/skills → CLAUDE.md, .cursor/rules, .claude/skills.
+# Sync AGENTS.md + .agents/skills → CLAUDE.md + .claude/skills.
 ./sync-agents --git-add
