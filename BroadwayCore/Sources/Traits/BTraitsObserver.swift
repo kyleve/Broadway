@@ -43,7 +43,7 @@ public final class BTraitsObserver {
         for reg in traits.registrations {
             let regID = reg.id
 
-            let observer = reg.createObserver { [weak self] newValue in
+            let observer = reg.createObserver(viewController) { [weak self] newValue in
                 guard let self else { return }
 
                 let old = self.traits

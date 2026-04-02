@@ -1,31 +1,37 @@
 //
 //  BTraitOverridesViewController.swift
-//  BroadwayCore
-//
-//  Created by Kyle Van Essen on 3/31/26.
+//  BroadwayUI
 //
 
 import BroadwayCore
-import Foundation
 import UIKit
 
+/// A container view controller that applies ``BTraits/Overrides`` to the
+/// inherited ``BContext`` before passing it to its child.
+///
+/// Child creation and override application are deferred until the
+/// view controller enters a valid view hierarchy (`viewIsAppearing`),
+/// matching ``BRootViewController``'s lazy setup pattern.
 public final class BTraitOverridesViewController<Content: UIViewController>: UIViewController {
-    public let content: Content
-    public let overrides: (Context, inout BTraits.Overrides) -> Void
+    // MARK: Public
 
-    @available(*, unavailable)
-    required init?(coder _: NSCoder) {
-        fatalError()
+    /// The child view controller, available after setup completes.
+    public private(set) var content: Content?
+
+    public struct Context {
+        public let traits: BTraits
     }
 
+    // MARK: Initialization
+
     public init(
-        _ content: () -> Content,
+        _ content: @escaping () -> Content,
         overrides: @escaping (Context, inout BTraits.Overrides) -> Void,
     ) {
-        self.content = content()
+        makeContent = content
         self.overrides = overrides
 
-        super.init()
+        super.init(nibName: nil, bundle: nil)
 
         registerForTraitChanges(
             [BContextTrait.self],
@@ -35,31 +41,63 @@ public final class BTraitOverridesViewController<Content: UIViewController>: UIV
 
     public convenience init<Value>(
         set keyPath: WritableKeyPath<BTraits.Overrides, Value>,
-        to: Value,
-        content: () -> Content,
+        to value: Value,
+        content: @escaping () -> Content,
     ) {
         self.init(content) { _, overrides in
-            overrides[keyPath: keyPath] = to
+            overrides[keyPath: keyPath] = value
         }
     }
 
-    public struct Context {
-        public let traits: BTraits
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
+        fatalError()
+    }
+
+    // MARK: Lifecycle
+
+    override public func viewIsAppearing(_ animated: Bool) {
+        super.viewIsAppearing(animated)
+
+        setUpIfNeeded()
+    }
+
+    override public func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+
+        content?.view.frame = view.bounds
+    }
+
+    // MARK: Private
+
+    private let makeContent: () -> Content
+    private let overrides: (Context, inout BTraits.Overrides) -> Void
+
+    private func setUpIfNeeded() {
+        guard content == nil else { return }
+
+        applyOverrides()
+
+        let child = makeContent()
+        content = child
+
+        addChild(child)
+        child.didMove(toParent: self)
+
+        child.view.frame = view.bounds
+        view.addSubview(child.view)
+    }
+
+    private func applyOverrides() {
+        var current = traitCollection.bContext.traitOverrides
+        overrides(.init(traits: traitCollection.bContext.traits), &current)
+        traitOverrides.bContext.traitOverrides = current
     }
 
     @objc private func onTraitsDidChange(
         vc _: UIViewController,
         previous _: UITraitCollection,
     ) {
-        let original = traitCollection.bContext.traitOverrides
-        var updated = original
-
-        overrides(.init(traits: traitCollection.bContext.traits), &updated)
-
-        if original != updated {
-            // TODO: Does this actually work? I hope so, since context is
-            // a struct, but not 100% sure. Hopefully each VC gets its own trait collection.
-            traitOverrides.bContext.traitOverrides = updated
-        }
+        applyOverrides()
     }
 }

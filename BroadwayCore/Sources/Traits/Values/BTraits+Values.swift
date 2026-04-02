@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 extension BTraits {
     public var mode: BMode {
@@ -38,6 +39,25 @@ public enum BMode: Equatable, Hashable {
 
 extension BMode: BTraitsValue {
     public static let defaultValue: BMode = .light
+
+    @MainActor public static func currentValue(from viewController: UIViewController) -> BMode {
+        switch viewController.traitCollection.userInterfaceStyle {
+            case .dark: .dark
+            default: .light
+        }
+    }
+
+    @MainActor public static func makeObserver(
+        with viewController: UIViewController,
+        onChange: @MainActor @escaping @Sendable (BMode) -> Void,
+    ) -> UIViewControllerTraitObserver {
+        UIViewControllerTraitObserver(
+            observing: [UITraitUserInterfaceStyle.self],
+            on: viewController,
+        ) { vc in
+            onChange(currentValue(from: vc))
+        }
+    }
 }
 
 public enum BContentSizeCategory: Equatable, Hashable, Comparable {
@@ -61,4 +81,38 @@ public enum BContentSizeCategory: Equatable, Hashable, Comparable {
 
 extension BContentSizeCategory: BTraitsValue {
     public static let defaultValue: BContentSizeCategory = .large
+
+    @MainActor public static func currentValue(from viewController: UIViewController) -> BContentSizeCategory {
+        .from(viewController.traitCollection.preferredContentSizeCategory)
+    }
+
+    @MainActor public static func makeObserver(
+        with viewController: UIViewController,
+        onChange: @MainActor @escaping @Sendable (BContentSizeCategory) -> Void,
+    ) -> UIViewControllerTraitObserver {
+        UIViewControllerTraitObserver(
+            observing: [UITraitPreferredContentSizeCategory.self],
+            on: viewController,
+        ) { vc in
+            onChange(currentValue(from: vc))
+        }
+    }
+
+    public static func from(_ uiCategory: UIContentSizeCategory) -> BContentSizeCategory {
+        switch uiCategory {
+            case .extraSmall: .extraSmall
+            case .small: .small
+            case .medium: .medium
+            case .large: .large
+            case .extraLarge: .extraLarge
+            case .extraExtraLarge: .extraExtraLarge
+            case .extraExtraExtraLarge: .extraExtraExtraLarge
+            case .accessibilityMedium: .accessibilityMedium
+            case .accessibilityLarge: .accessibilityLarge
+            case .accessibilityExtraLarge: .accessibilityExtraLarge
+            case .accessibilityExtraExtraLarge: .accessibilityExtraExtraLarge
+            case .accessibilityExtraExtraExtraLarge: .accessibilityExtraExtraExtraLarge
+            default: .large
+        }
+    }
 }

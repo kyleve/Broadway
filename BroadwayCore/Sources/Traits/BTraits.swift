@@ -75,8 +75,8 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
         registrations.append(Registration(
             id: TypeIdentifier(V.self),
             readCurrentValue: { vc in AnyHashable(V.currentValue(from: vc)) },
-            createObserver: { onChange in
-                V.makeObserver { newValue in onChange(AnyHashable(newValue)) }
+            createObserver: { vc, onChange in
+                V.makeObserver(with: vc) { newValue in onChange(AnyHashable(newValue)) }
             },
         ))
     }
@@ -101,6 +101,7 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
         let id: TypeIdentifier
         let readCurrentValue: @MainActor @Sendable (UIViewController) -> AnyHashable
         let createObserver: @MainActor @Sendable (
+            UIViewController,
             @escaping @MainActor @Sendable (AnyHashable) -> Void
         ) -> any BTraitsValueObserver
     }
@@ -129,6 +130,7 @@ public protocol BTraitsValue: Hashable {
     @MainActor static func currentValue(from viewController: UIViewController) -> Self
 
     @MainActor static func makeObserver(
+        with viewController: UIViewController,
         onChange: @MainActor @escaping @Sendable (Self) -> Void,
     ) -> Observer
 }
@@ -143,6 +145,7 @@ extension BTraitsValue {
 
 extension BTraitsValue where Observer == NeverObserver {
     @MainActor public static func makeObserver(
+        with _: UIViewController,
         onChange _: @MainActor @escaping @Sendable (Self) -> Void,
     ) -> NeverObserver {
         NeverObserver()

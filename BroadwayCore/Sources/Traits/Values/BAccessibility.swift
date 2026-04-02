@@ -145,6 +145,7 @@ extension BAccessibility: BTraitsValue {
     }
 
     @MainActor public static func makeObserver(
+        with _: UIViewController,
         onChange: @MainActor @escaping @Sendable (BAccessibility) -> Void,
     ) -> BAccessibility.Observer {
         .init { _, new in onChange(new) }
