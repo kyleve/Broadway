@@ -1,3 +1,5 @@
+<!-- Generated from AGENTS.md — do not edit directly -->
+
 # AGENTS.md — Repository Shape
 
 This document describes the structure and conventions of the Broadway repository for AI agents and contributors.

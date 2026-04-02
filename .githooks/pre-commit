@@ -14,3 +14,14 @@ if [ -n "$staged" ]; then
     git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
       | xargs -0 git add
 fi
+
+# Sync AGENTS.md → CLAUDE.md + .cursor/rules/*.mdc, then re-stage.
+staged_agents=$(git diff --cached --name-only --diff-filter=ACMRD | grep 'AGENTS\.md$' || true)
+
+if [ -n "$staged_agents" ]; then
+    ./sync-agents
+
+    git add -A -- 'CLAUDE.md' 2>/dev/null || true
+    git add -A -- '*/CLAUDE.md' 2>/dev/null || true
+    git add -A -- '.cursor/rules' 2>/dev/null || true
+fi

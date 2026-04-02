@@ -1,0 +1,66 @@
+#!/bin/bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+MARKER="<!-- Generated from AGENTS.md — do not edit directly -->"
+
+# --- Clean previously generated files ---
+
+while IFS= read -r -d '' file; do
+    if head -n1 "$file" | grep -qF "Generated from AGENTS.md"; then
+        rm "$file"
+        echo "Removed $file"
+    fi
+done < <(find "$REPO_ROOT" -name "CLAUDE.md" \
+    -not -path "*/Derived/*" \
+    -not -path "*/.build/*" \
+    -not -path "*/.git/*" \
+    -print0 2>/dev/null || true)
+
+if [ -d "$REPO_ROOT/.cursor/rules" ]; then
+    while IFS= read -r -d '' file; do
+        if head -n5 "$file" | grep -qF "AGENTS.md — do not edit directly"; then
+            rm "$file"
+            echo "Removed $file"
+        fi
+    done < <(find "$REPO_ROOT/.cursor/rules" -name "*.mdc" -print0 2>/dev/null || true)
+fi
+
+# --- Generate from AGENTS.md files ---
+
+while IFS= read -r -d '' agents_file; do
+    dir="$(dirname "$agents_file")"
+    rel_dir="${dir#"$REPO_ROOT"}"
+    rel_dir="${rel_dir#/}"
+
+    # CLAUDE.md — all AGENTS.md files including root
+    {
+        echo "$MARKER"
+        echo ""
+        cat "$agents_file"
+    } > "$dir/CLAUDE.md"
+    echo "Generated ${rel_dir:+$rel_dir/}CLAUDE.md"
+
+    # .cursor/rules/*.mdc — nested only (Cursor reads root AGENTS.md natively)
+    if [ -n "$rel_dir" ]; then
+        mkdir -p "$REPO_ROOT/.cursor/rules"
+        mdc_name="${rel_dir//\//-}"
+        mdc_path="$REPO_ROOT/.cursor/rules/${mdc_name}.mdc"
+
+        {
+            echo "---"
+            echo "description: \"Generated from ${rel_dir}/AGENTS.md — do not edit directly\""
+            echo "globs: [\"${rel_dir}/**\"]"
+            echo "alwaysApply: false"
+            echo "---"
+            echo ""
+            cat "$agents_file"
+        } > "$mdc_path"
+        echo "Generated .cursor/rules/${mdc_name}.mdc"
+    fi
+done < <(find "$REPO_ROOT" -name "AGENTS.md" \
+    -not -path "*/Derived/*" \
+    -not -path "*/.build/*" \
+    -not -path "*/.git/*" \
+    -not -path "*/.cursor/*" \
+    -print0 2>/dev/null || true)
