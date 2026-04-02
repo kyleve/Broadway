@@ -4,27 +4,43 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 MARKER="<!-- Generated from AGENTS.md — do not edit directly -->"
 
-# --- Clean previously generated files ---
+GIT_ADD=false
+for arg in "$@"; do
+    case "$arg" in
+        --git-add) GIT_ADD=true ;;
+    esac
+done
 
-while IFS= read -r -d '' file; do
-    if head -n1 "$file" | grep -qF "Generated from AGENTS.md"; then
-        rm "$file"
-        echo "Removed $file"
+changed=false
+expected_files="$(mktemp)"
+trap 'rm -f "$expected_files"' EXIT
+
+# --- Helper: write a file only when its content has changed ---
+
+write_if_changed() {
+    local target="$1"
+    local content="$2"
+
+    if [ -f "$target" ] && [ "$(cat "$target")" = "$content" ]; then
+        return
     fi
-done < <(find "$REPO_ROOT" -name "CLAUDE.md" \
-    -not -path "*/Derived/*" \
-    -not -path "*/.build/*" \
-    -not -path "*/.git/*" \
-    -print0 2>/dev/null || true)
 
-if [ -d "$REPO_ROOT/.cursor/rules" ]; then
-    while IFS= read -r -d '' file; do
-        if head -n5 "$file" | grep -qF "AGENTS.md — do not edit directly"; then
-            rm "$file"
-            echo "Removed $file"
-        fi
-    done < <(find "$REPO_ROOT/.cursor/rules" -name "*.mdc" -print0 2>/dev/null || true)
-fi
+    mkdir -p "$(dirname "$target")"
+    printf '%s\n' "$content" > "$target"
+    echo "Updated $target"
+    changed=true
+}
+
+# --- Helper: remove a file if it exists ---
+
+remove_if_exists() {
+    local target="$1"
+    if [ -f "$target" ]; then
+        rm "$target"
+        echo "Removed $target"
+        changed=true
+    fi
+}
 
 # --- Generate from AGENTS.md files ---
 
@@ -33,34 +49,79 @@ while IFS= read -r -d '' agents_file; do
     rel_dir="${dir#"$REPO_ROOT"}"
     rel_dir="${rel_dir#/}"
 
-    # CLAUDE.md — all AGENTS.md files including root
-    {
-        echo "$MARKER"
-        echo ""
-        cat "$agents_file"
-    } > "$dir/CLAUDE.md"
-    echo "Generated ${rel_dir:+$rel_dir/}CLAUDE.md"
+    claude_path="$dir/CLAUDE.md"
+    content="$(printf '%s\n\n%s' "$MARKER" "$(cat "$agents_file")")"
+    write_if_changed "$claude_path" "$content"
+    echo "$claude_path" >> "$expected_files"
 
-    # .cursor/rules/*.mdc — nested only (Cursor reads root AGENTS.md natively)
     if [ -n "$rel_dir" ]; then
-        mkdir -p "$REPO_ROOT/.cursor/rules"
         mdc_name="${rel_dir//\//-}"
         mdc_path="$REPO_ROOT/.cursor/rules/${mdc_name}.mdc"
-
-        {
-            echo "---"
-            echo "description: \"Generated from ${rel_dir}/AGENTS.md — do not edit directly\""
-            echo "globs: [\"${rel_dir}/**\"]"
-            echo "alwaysApply: false"
-            echo "---"
-            echo ""
-            cat "$agents_file"
-        } > "$mdc_path"
-        echo "Generated .cursor/rules/${mdc_name}.mdc"
+        mdc_content="$(printf '%s\n%s\n%s\n%s\n%s\n\n%s' \
+            "---" \
+            "description: \"Generated from ${rel_dir}/AGENTS.md — do not edit directly\"" \
+            "globs: [\"${rel_dir}/**\"]" \
+            "alwaysApply: false" \
+            "---" \
+            "$(cat "$agents_file")")"
+        write_if_changed "$mdc_path" "$mdc_content"
+        echo "$mdc_path" >> "$expected_files"
     fi
 done < <(find "$REPO_ROOT" -name "AGENTS.md" \
     -not -path "*/Derived/*" \
     -not -path "*/.build/*" \
     -not -path "*/.git/*" \
     -not -path "*/.cursor/*" \
+    -not -path "*/.claude/*" \
     -print0 2>/dev/null || true)
+
+# --- Clean stale CLAUDE.md files ---
+
+while IFS= read -r -d '' file; do
+    if ! grep -qxF "$file" "$expected_files"; then
+        if head -n1 "$file" | grep -qF "Generated from AGENTS.md"; then
+            remove_if_exists "$file"
+        fi
+    fi
+done < <(find "$REPO_ROOT" -name "CLAUDE.md" \
+    -not -path "*/Derived/*" \
+    -not -path "*/.build/*" \
+    -not -path "*/.git/*" \
+    -print0 2>/dev/null || true)
+
+# --- Clean stale .mdc files ---
+
+if [ -d "$REPO_ROOT/.cursor/rules" ]; then
+    while IFS= read -r -d '' file; do
+        if ! grep -qxF "$file" "$expected_files"; then
+            if head -n5 "$file" | grep -qF "AGENTS.md — do not edit directly"; then
+                remove_if_exists "$file"
+            fi
+        fi
+    done < <(find "$REPO_ROOT/.cursor/rules" -name "*.mdc" -print0 2>/dev/null || true)
+fi
+
+# --- Sync .agents/skills → .claude/skills ---
+
+if [ -d "$REPO_ROOT/.agents/skills" ]; then
+    mkdir -p "$REPO_ROOT/.claude/skills"
+    if ! diff -rq "$REPO_ROOT/.agents/skills" "$REPO_ROOT/.claude/skills" > /dev/null 2>&1; then
+        rm -rf "$REPO_ROOT/.claude/skills"
+        cp -R "$REPO_ROOT/.agents/skills" "$REPO_ROOT/.claude/skills"
+        echo "Synced .agents/skills/ → .claude/skills/"
+        changed=true
+    fi
+elif [ -d "$REPO_ROOT/.claude/skills" ]; then
+    rm -rf "$REPO_ROOT/.claude/skills"
+    echo "Removed .claude/skills/"
+    changed=true
+fi
+
+# --- Stage generated files if --git-add was passed ---
+
+if [ "$GIT_ADD" = true ] && [ "$changed" = true ]; then
+    git add -A -- 'CLAUDE.md' 2>/dev/null || true
+    git add -A -- '*/CLAUDE.md' 2>/dev/null || true
+    git add -A -- '.cursor/rules' 2>/dev/null || true
+    git add -A -- '.claude/skills' 2>/dev/null || true
+fi
