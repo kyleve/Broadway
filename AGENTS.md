@@ -114,6 +114,7 @@ All framework test targets use BroadwayTestHost and depend on BroadwayTesting.
 
 ## Key Conventions
 
+- **Shell scripts** should be kept short (≤ ~20 lines). For anything longer, use **Ruby** for readability and portability.
 - **SwiftUI** is the UI framework. Catalog app views live under `BroadwayCatalog/Sources/`.
 - **BroadwayUI** is the reusable component library. All shared UI lives under `BroadwayUI/Sources/`.
 - **BroadwayCore** provides foundational utilities and shared logic. Source lives under `BroadwayCore/Sources/`.

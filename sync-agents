@@ -11,9 +11,9 @@ for arg in "$@"; do
     esac
 done
 
-changed=false
+changed_files="$(mktemp)"
 expected_files="$(mktemp)"
-trap 'rm -f "$expected_files"' EXIT
+trap 'rm -f "$changed_files" "$expected_files"' EXIT
 
 # --- Helper: write a file only when its content has changed ---
 
@@ -28,17 +28,17 @@ write_if_changed() {
     mkdir -p "$(dirname "$target")"
     printf '%s\n' "$content" > "$target"
     echo "Updated $target"
-    changed=true
+    echo "$target" >> "$changed_files"
 }
 
-# --- Helper: remove a file if it exists ---
+# --- Helper: remove a file and track the change ---
 
 remove_if_exists() {
     local target="$1"
     if [ -f "$target" ]; then
         rm "$target"
         echo "Removed $target"
-        changed=true
+        echo "$target" >> "$changed_files"
     fi
 }
 
@@ -65,7 +65,7 @@ done < <(find "$REPO_ROOT" -name "AGENTS.md" \
 
 while IFS= read -r -d '' file; do
     if ! grep -qxF "$file" "$expected_files"; then
-        if head -n1 "$file" | grep -qF "Generated from AGENTS.md"; then
+        if head -n1 "$file" | grep -qxF "$MARKER"; then
             remove_if_exists "$file"
         fi
     fi
@@ -83,18 +83,18 @@ if [ -d "$REPO_ROOT/.agents/skills" ]; then
         rm -rf "$REPO_ROOT/.claude/skills"
         cp -R "$REPO_ROOT/.agents/skills" "$REPO_ROOT/.claude/skills"
         echo "Synced .agents/skills/ → .claude/skills/"
-        changed=true
+        echo ".claude/skills" >> "$changed_files"
     fi
 elif [ -d "$REPO_ROOT/.claude/skills" ]; then
     rm -rf "$REPO_ROOT/.claude/skills"
     echo "Removed .claude/skills/"
-    changed=true
+    echo ".claude/skills" >> "$changed_files"
 fi
 
 # --- Stage generated files if --git-add was passed ---
 
-if [ "$GIT_ADD" = true ] && [ "$changed" = true ]; then
-    git add -A -- 'CLAUDE.md' 2>/dev/null || true
-    git add -A -- '*/CLAUDE.md' 2>/dev/null || true
-    git add -A -- '.claude/skills' 2>/dev/null || true
+if [ "$GIT_ADD" = true ] && [ -s "$changed_files" ]; then
+    while IFS= read -r file; do
+        git add -A -- "$file" 2>/dev/null || true
+    done < "$changed_files"
 fi
