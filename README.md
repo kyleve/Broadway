@@ -32,7 +32,6 @@ BroadwayUI/               # Reusable UI component framework (Sources/, Tests/)
 BroadwayCore/             # Foundational utilities framework (Sources/, Tests/)
 BroadwayTestHost/         # Minimal test host app
 BroadwayTesting/          # Shared test utilities framework
-Plans/                    # Archived implementation plans
 Project.swift             # Tuist project manifest
 ide                       # Dev script (generate project)
 ```
