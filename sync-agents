@@ -124,10 +124,11 @@ class SyncAgents
       FileUtils.rm_rf(dest)
       FileUtils.mkdir_p(SKILLS_DIR)
       FileUtils.cp_r(skill_src, dest)
-      puts "Added #{name} from #{repo}"
+      sha = head_sha(tmpdir)
+      puts "Added #{name} from #{repo}@#{sha[0..7]}"
 
       manifest = load_manifest
-      manifest[name] = { "repo" => repo, "path" => name, "ref" => "main" }
+      manifest[name] = { "repo" => repo, "path" => name, "ref" => sha }
       save_manifest(manifest)
     end
   end
@@ -176,26 +177,36 @@ class SyncAgents
       return
     end
 
+    changed = false
     manifest.each do |name, entry|
       repo = entry["repo"]
       path = entry["path"]
-      ref = entry["ref"] || "main"
 
       Dir.mktmpdir do |tmpdir|
-        clone_repo(repo, ref, tmpdir)
+        clone_repo(repo, "main", tmpdir)
+        sha = head_sha(tmpdir)
+
+        if sha == entry["ref"]
+          puts "#{name} already at #{sha[0..7]}"
+          next
+        end
 
         skill_src = File.join(tmpdir, path)
         unless Dir.exist?(skill_src)
-          warn "Warning: '#{path}' not found in #{repo}@#{ref}, skipping #{name}"
+          warn "Warning: '#{path}' not found in #{repo}@#{sha[0..7]}, skipping #{name}"
           next
         end
 
         dest = File.join(SKILLS_DIR, name)
         FileUtils.rm_rf(dest)
         FileUtils.cp_r(skill_src, dest)
-        puts "Updated #{name} from #{repo}@#{ref}"
+        entry["ref"] = sha
+        changed = true
+        puts "Updated #{name} from #{repo}@#{sha[0..7]}"
       end
     end
+
+    save_manifest(manifest) if changed
   end
 
   # --- Helpers ---
@@ -248,8 +259,17 @@ class SyncAgents
 
   def clone_repo(repo, ref, dest)
     url = "https://github.com/#{repo}.git"
-    _, stderr, status = Open3.capture3("git", "clone", "--depth", "1", "--branch", ref, url, dest)
-    abort "Failed to clone #{repo}@#{ref}: #{stderr}" unless status.success?
+    system("git", "init", "-q", dest, out: File::NULL, err: File::NULL)
+    system("git", "-C", dest, "remote", "add", "origin", url, out: File::NULL, err: File::NULL)
+    _, stderr, status = Open3.capture3("git", "-C", dest, "fetch", "--depth", "1", "origin", ref)
+    abort "Failed to fetch #{repo}@#{ref}: #{stderr}" unless status.success?
+    system("git", "-C", dest, "checkout", "-q", "FETCH_HEAD", out: File::NULL, err: File::NULL)
+  end
+
+  def head_sha(repo_dir)
+    stdout, _, status = Open3.capture3("git", "-C", repo_dir, "rev-parse", "HEAD")
+    abort "Failed to resolve HEAD in #{repo_dir}" unless status.success?
+    stdout.strip
   end
 
   def list_skills(dir)
