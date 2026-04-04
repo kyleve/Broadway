@@ -134,7 +134,7 @@ class SyncAgents
     abort "Could not parse GitHub repo from: #{url}" unless repo
 
     Dir.mktmpdir do |tmpdir|
-      clone_repo(repo, "main", tmpdir)
+      clone_default_branch(repo, tmpdir)
 
       if name
         skill_src = File.join(tmpdir, name)
@@ -216,7 +216,7 @@ class SyncAgents
       path = entry["path"]
 
       Dir.mktmpdir do |tmpdir|
-        clone_repo(repo, "main", tmpdir)
+        clone_default_branch(repo, tmpdir)
         sha = head_sha(tmpdir)
 
         if sha == entry["ref"]
@@ -267,8 +267,8 @@ class SyncAgents
 
   def dirs_equal?(a, b)
     return false unless Dir.exist?(a) && Dir.exist?(b)
-    a_files = Dir.glob(File.join(a, "**", "*")).map { |f| f.sub(a, "") }.sort
-    b_files = Dir.glob(File.join(b, "**", "*")).map { |f| f.sub(b, "") }.sort
+    a_files = Dir.glob(File.join(a, "**", "*"), File::FNM_DOTMATCH).map { |f| f.sub(a, "") }.sort
+    b_files = Dir.glob(File.join(b, "**", "*"), File::FNM_DOTMATCH).map { |f| f.sub(b, "") }.sort
     return false unless a_files == b_files
     a_files.each do |rel|
       af = File.join(a, rel)
@@ -288,6 +288,15 @@ class SyncAgents
   def parse_github_repo(url)
     match = url.match(%r{github\.com[/:]([^/]+/[^/]+?)(?:\.git)?/?$})
     match && match[1]
+  end
+
+  def clone_default_branch(repo, dest)
+    url = "https://github.com/#{repo}.git"
+    system("git", "init", "-q", dest, out: File::NULL, err: File::NULL)
+    system("git", "-C", dest, "remote", "add", "origin", url, out: File::NULL, err: File::NULL)
+    _, stderr, status = Open3.capture3("git", "-C", dest, "fetch", "--depth", "1", "origin", "HEAD")
+    abort "Failed to clone #{repo}: #{stderr}" unless status.success?
+    system("git", "-C", dest, "checkout", "-q", "FETCH_HEAD", out: File::NULL, err: File::NULL)
   end
 
   def clone_repo(repo, ref, dest)
