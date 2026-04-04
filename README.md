@@ -5,16 +5,33 @@ An open-source iOS and Mac Catalyst design system prototype.
 ## Requirements
 
 - Xcode 16+
-- [mise](https://mise.jdx.dev) (manages Tuist automatically)
+- [mise](https://mise.jdx.dev) (manages Tuist and SwiftFormat automatically)
 - iOS 26.0+
 
 ## Getting Started
 
+### Install mise
+
 ```bash
-mise install          # Installs the pinned version of Tuist from .mise.toml
-./ide                 # Generates the Xcode project
-./ide -i              # Runs tuist install first, then generates
+curl https://mise.run | sh
 ```
+
+Or via Homebrew:
+
+```bash
+brew install mise
+```
+
+### Set Up the Project
+
+```bash
+mise install       # Install pinned versions of Tuist and SwiftFormat
+./ide -i           # Install dependencies, fetch external skills, generate Xcode project
+```
+
+After the initial setup, run `./ide` (without `-i`) to regenerate the Xcode project without re-installing dependencies.
+
+The `./ide` script also configures a Git pre-commit hook that automatically formats staged Swift files with SwiftFormat and keeps generated AI agent configuration in sync.
 
 ### Run Tests
 
@@ -33,7 +50,19 @@ BroadwayCore/             # Foundational utilities framework (Sources/, Tests/)
 BroadwayTestHost/         # Minimal test host app
 BroadwayTesting/          # Shared test utilities framework
 Project.swift             # Tuist project manifest
-ide                       # Dev script (generate project)
+ide                       # Dev setup script
+swiftformat               # Run SwiftFormat
+sync-agents               # Sync AI agent configuration across tools
+```
+
+## AI Agent Skills
+
+External skills are managed via `sync-agents`. The manifest at `.agents/external-skills.json` tracks installed skills pinned to specific commits.
+
+```bash
+./sync-agents --add <github-url> [name]   # Add a new skill from GitHub
+./sync-agents --update                    # Update all skills to latest
+./sync-agents --install                   # Fetch skills from the manifest
 ```
 
 ## License

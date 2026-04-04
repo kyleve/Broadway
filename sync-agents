@@ -1,5 +1,38 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+#
+# sync-agents — keep AI agent configuration in sync across tools.
+#
+# AGENTS.md is the source of truth. Cursor and Codex read it natively;
+# Claude Code needs CLAUDE.md and .claude/skills/. This script bridges
+# the gap.
+#
+# Commands:
+#   ./sync-agents                        Generate CLAUDE.md files from
+#                                        AGENTS.md and sync local skills
+#                                        to .claude/skills/. Incremental:
+#                                        skips files that are already up
+#                                        to date.
+#
+#   ./sync-agents --install              Fetch external skills listed in
+#                                        .agents/external-skills.json.
+#                                        Skips skills already present.
+#                                        Run automatically by ./ide.
+#
+#   ./sync-agents --add <url> [name]     Add an external skill from a
+#                                        GitHub repo. Clones the repo,
+#                                        copies the skill into
+#                                        .agents/skills/, and pins the
+#                                        commit SHA in the manifest.
+#
+#   ./sync-agents --update               Re-fetch all external skills
+#                                        from their repos at the latest
+#                                        commit. Updates the pinned SHA
+#                                        in the manifest.
+#
+#   ./sync-agents --git-add              Sync, then stage any changed
+#                                        files with git. Used by the
+#                                        pre-commit hook.
 
 require "fileutils"
 require "json"
