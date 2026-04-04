@@ -31,10 +31,12 @@ sync-agents               # Generate CLAUDE.md + .claude/skills from AGENTS.md
 
 ## Agent Instructions Sync
 
-`AGENTS.md` is the source of truth for AI agent instructions. Cursor and Codex read nested `AGENTS.md` natively; Claude Code uses `CLAUDE.md` and `.claude/skills/`.
+`AGENTS.md` is the source of truth for AI agent instructions. Cursor and Codex read nested `AGENTS.md` natively; Claude Code uses `CLAUDE.md` and `.claude/skills/`. Generated files (`CLAUDE.md`, `.claude/skills/`) are gitignored and created by `./sync-agents`.
 
-- Run `./sync-agents` to generate `CLAUDE.md` files and sync `.agents/skills/` to `.claude/skills/`.
-- The pre-commit hook runs `./sync-agents --git-add` automatically.
+- `./sync-agents` — generate `CLAUDE.md` files and sync skills to `.claude/skills/`.
+- `./sync-agents --install` — fetch external skills from `.agents/external-skills.json` (run automatically by `./ide`).
+- `./sync-agents --add <url> [name]` — add a new external skill from GitHub.
+- `./sync-agents --update` — force re-fetch all external skills to latest.
 
 ## Dependency Graph
 

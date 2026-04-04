@@ -18,6 +18,7 @@ xcuserdata/
 .DS_Store
 
 ## Generated agent files (re-create via ./sync-agents --install)
+CLAUDE.md
 .claude/skills/
 
 ## Obj-C/Swift specific
