@@ -1,100 +1,219 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-MARKER="<!-- Generated from AGENTS.md — do not edit directly -->"
+require "fileutils"
+require "json"
+require "tmpdir"
+require "open3"
 
-GIT_ADD=false
-for arg in "$@"; do
-    case "$arg" in
-        --git-add) GIT_ADD=true ;;
-    esac
-done
+REPO_ROOT = File.expand_path("..", __FILE__)
+MARKER = "<!-- Generated from AGENTS.md — do not edit directly -->"
+SKILLS_DIR = File.join(REPO_ROOT, ".agents", "skills")
+CLAUDE_SKILLS_DIR = File.join(REPO_ROOT, ".claude", "skills")
+MANIFEST_PATH = File.join(REPO_ROOT, ".agents", "external-skills.json")
 
-changed_files="$(mktemp)"
-expected_files="$(mktemp)"
-trap 'rm -f "$changed_files" "$expected_files"' EXIT
+EXCLUDED_DIRS = %w[Derived .build .git .cursor .claude].freeze
 
-# --- Helper: write a file only when its content has changed ---
+class SyncAgents
+  def initialize
+    @changed_files = []
+  end
 
-write_if_changed() {
-    local target="$1"
-    local content="$2"
+  def run(args)
+    if args.include?("--install")
+      idx = args.index("--install")
+      url = args[idx + 1]
+      name = args[idx + 2]
+      abort "Usage: sync-agents --install <github-url> <skill-name>" unless url
+      install_skill(url, name)
+    elsif args.include?("--update")
+      update_skills
+    end
 
-    if [ -f "$target" ] && [ "$(cat "$target")" = "$content" ]; then
-        return
-    fi
+    sync_claude_md
+    sync_skills
 
-    mkdir -p "$(dirname "$target")"
-    printf '%s\n' "$content" > "$target"
-    echo "Updated $target"
-    echo "$target" >> "$changed_files"
-}
+    stage_files if args.include?("--git-add") && !@changed_files.empty?
+  end
 
-# --- Helper: remove a file and track the change ---
+  private
 
-remove_if_exists() {
-    local target="$1"
-    if [ -f "$target" ]; then
-        rm "$target"
-        echo "Removed $target"
-        echo "$target" >> "$changed_files"
-    fi
-}
+  # --- CLAUDE.md sync ---
 
-# --- Generate CLAUDE.md from AGENTS.md files ---
+  def sync_claude_md
+    expected = []
 
-while IFS= read -r -d '' agents_file; do
-    dir="$(dirname "$agents_file")"
-    rel_dir="${dir#"$REPO_ROOT"}"
-    rel_dir="${rel_dir#/}"
+    find_files("AGENTS.md", exclude: EXCLUDED_DIRS).each do |agents_file|
+      claude_path = File.join(File.dirname(agents_file), "CLAUDE.md")
+      content = "#{MARKER}\n\n#{File.read(agents_file)}"
+      write_if_changed(claude_path, content)
+      expected << claude_path
+    end
 
-    claude_path="$dir/CLAUDE.md"
-    content="$(printf '%s\n\n%s' "$MARKER" "$(cat "$agents_file")")"
-    write_if_changed "$claude_path" "$content"
-    echo "$claude_path" >> "$expected_files"
-done < <(find "$REPO_ROOT" -name "AGENTS.md" \
-    -not -path "*/Derived/*" \
-    -not -path "*/.build/*" \
-    -not -path "*/.git/*" \
-    -not -path "*/.cursor/*" \
-    -not -path "*/.claude/*" \
-    -print0 2>/dev/null || true)
+    find_files("CLAUDE.md", exclude: %w[Derived .build .git]).each do |claude_file|
+      next if expected.include?(claude_file)
+      first_line = File.open(claude_file, &:readline).chomp rescue next
+      remove_if_exists(claude_file) if first_line == MARKER
+    end
+  end
 
-# --- Clean stale CLAUDE.md files ---
+  # --- Skills sync ---
 
-while IFS= read -r -d '' file; do
-    if ! grep -qxF "$file" "$expected_files"; then
-        if head -n1 "$file" | grep -qxF "$MARKER"; then
-            remove_if_exists "$file"
-        fi
-    fi
-done < <(find "$REPO_ROOT" -name "CLAUDE.md" \
-    -not -path "*/Derived/*" \
-    -not -path "*/.build/*" \
-    -not -path "*/.git/*" \
-    -print0 2>/dev/null || true)
+  def sync_skills
+    if Dir.exist?(SKILLS_DIR)
+      FileUtils.mkdir_p(CLAUDE_SKILLS_DIR)
+      unless dirs_equal?(SKILLS_DIR, CLAUDE_SKILLS_DIR)
+        FileUtils.rm_rf(CLAUDE_SKILLS_DIR)
+        FileUtils.cp_r(SKILLS_DIR, CLAUDE_SKILLS_DIR)
+        puts "Synced .agents/skills/ → .claude/skills/"
+        @changed_files << CLAUDE_SKILLS_DIR
+      end
+    elsif Dir.exist?(CLAUDE_SKILLS_DIR)
+      FileUtils.rm_rf(CLAUDE_SKILLS_DIR)
+      puts "Removed .claude/skills/"
+      @changed_files << CLAUDE_SKILLS_DIR
+    end
+  end
 
-# --- Sync .agents/skills → .claude/skills ---
+  # --- Install external skill ---
 
-if [ -d "$REPO_ROOT/.agents/skills" ]; then
-    mkdir -p "$REPO_ROOT/.claude/skills"
-    if ! diff -rq "$REPO_ROOT/.agents/skills" "$REPO_ROOT/.claude/skills" > /dev/null 2>&1; then
-        rm -rf "$REPO_ROOT/.claude/skills"
-        cp -R "$REPO_ROOT/.agents/skills" "$REPO_ROOT/.claude/skills"
-        echo "Synced .agents/skills/ → .claude/skills/"
-        echo ".claude/skills" >> "$changed_files"
-    fi
-elif [ -d "$REPO_ROOT/.claude/skills" ]; then
-    rm -rf "$REPO_ROOT/.claude/skills"
-    echo "Removed .claude/skills/"
-    echo ".claude/skills" >> "$changed_files"
-fi
+  def install_skill(url, name)
+    repo = parse_github_repo(url)
+    abort "Could not parse GitHub repo from: #{url}" unless repo
 
-# --- Stage generated files if --git-add was passed ---
+    Dir.mktmpdir do |tmpdir|
+      clone_repo(repo, "main", tmpdir)
 
-if [ "$GIT_ADD" = true ] && [ -s "$changed_files" ]; then
-    while IFS= read -r file; do
-        git add -A -- "$file" 2>/dev/null || true
-    done < "$changed_files"
-fi
+      if name
+        skill_src = File.join(tmpdir, name)
+        unless Dir.exist?(skill_src) && File.exist?(File.join(skill_src, "SKILL.md"))
+          available = list_skills(tmpdir)
+          abort "Skill '#{name}' not found in #{repo}. Available: #{available.join(", ")}"
+        end
+      else
+        available = list_skills(tmpdir)
+        case available.length
+        when 0 then abort "No skills found in #{repo}"
+        when 1 then name = available.first
+        else abort "Multiple skills in #{repo}: #{available.join(", ")}\n" \
+                    "Specify one: ./sync-agents --install #{url} <name>"
+        end
+        skill_src = File.join(tmpdir, name)
+      end
+
+      dest = File.join(SKILLS_DIR, name)
+      FileUtils.rm_rf(dest)
+      FileUtils.mkdir_p(SKILLS_DIR)
+      FileUtils.cp_r(skill_src, dest)
+      puts "Installed #{name} from #{repo}"
+
+      manifest = load_manifest
+      manifest[name] = { "repo" => repo, "path" => name, "ref" => "main" }
+      save_manifest(manifest)
+    end
+  end
+
+  # --- Update all external skills ---
+
+  def update_skills
+    manifest = load_manifest
+    if manifest.empty?
+      puts "No external skills to update."
+      return
+    end
+
+    manifest.each do |name, entry|
+      repo = entry["repo"]
+      path = entry["path"]
+      ref = entry["ref"] || "main"
+
+      Dir.mktmpdir do |tmpdir|
+        clone_repo(repo, ref, tmpdir)
+
+        skill_src = File.join(tmpdir, path)
+        unless Dir.exist?(skill_src)
+          warn "Warning: '#{path}' not found in #{repo}@#{ref}, skipping #{name}"
+          next
+        end
+
+        dest = File.join(SKILLS_DIR, name)
+        FileUtils.rm_rf(dest)
+        FileUtils.cp_r(skill_src, dest)
+        puts "Updated #{name} from #{repo}@#{ref}"
+      end
+    end
+  end
+
+  # --- Helpers ---
+
+  def write_if_changed(path, content)
+    return if File.exist?(path) && File.read(path) == content
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, content)
+    puts "Updated #{path}"
+    @changed_files << path
+  end
+
+  def remove_if_exists(path)
+    return unless File.exist?(path)
+    File.delete(path)
+    puts "Removed #{path}"
+    @changed_files << path
+  end
+
+  def find_files(name, exclude: [])
+    Dir.glob(File.join(REPO_ROOT, "**", name)).reject do |f|
+      exclude.any? { |d| f.include?("/#{d}/") }
+    end
+  end
+
+  def dirs_equal?(a, b)
+    return false unless Dir.exist?(a) && Dir.exist?(b)
+    a_files = Dir.glob(File.join(a, "**", "*")).map { |f| f.sub(a, "") }.sort
+    b_files = Dir.glob(File.join(b, "**", "*")).map { |f| f.sub(b, "") }.sort
+    return false unless a_files == b_files
+    a_files.each do |rel|
+      af = File.join(a, rel)
+      bf = File.join(b, rel)
+      next if File.directory?(af)
+      return false unless File.read(af) == File.read(bf)
+    end
+    true
+  end
+
+  def stage_files
+    @changed_files.each do |file|
+      system("git", "add", "-A", "--", file, err: File::NULL)
+    end
+  end
+
+  def parse_github_repo(url)
+    match = url.match(%r{github\.com[/:]([^/]+/[^/]+?)(?:\.git)?/?$})
+    match && match[1]
+  end
+
+  def clone_repo(repo, ref, dest)
+    url = "https://github.com/#{repo}.git"
+    _, stderr, status = Open3.capture3("git", "clone", "--depth", "1", "--branch", ref, url, dest)
+    abort "Failed to clone #{repo}@#{ref}: #{stderr}" unless status.success?
+  end
+
+  def list_skills(dir)
+    Dir.children(dir)
+      .select { |name| File.exist?(File.join(dir, name, "SKILL.md")) }
+      .sort
+  end
+
+  def load_manifest
+    return {} unless File.exist?(MANIFEST_PATH)
+    JSON.parse(File.read(MANIFEST_PATH))
+  end
+
+  def save_manifest(manifest)
+    FileUtils.mkdir_p(File.dirname(MANIFEST_PATH))
+    File.write(MANIFEST_PATH, JSON.pretty_generate(manifest) + "\n")
+    puts "Updated #{MANIFEST_PATH}"
+  end
+end
+
+SyncAgents.new.run(ARGV)
