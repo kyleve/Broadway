@@ -20,18 +20,21 @@ class SyncAgents
   end
 
   def run(args)
-    if args.include?("--install")
-      idx = args.index("--install")
+    if args.include?("--add")
+      idx = args.index("--add")
       url = args[idx + 1]
       name = args[idx + 2]
-      abort "Usage: sync-agents --install <github-url> <skill-name>" unless url
-      install_skill(url, name)
+      abort "Usage: sync-agents --add <github-url> [skill-name]" unless url
+      add_skill(url, name)
+    elsif args.include?("--install")
+      install_skills
     elsif args.include?("--update")
       update_skills
     end
 
     sync_claude_md
     sync_skills
+    update_skills_gitignore
 
     stage_files if args.include?("--git-add") && !@changed_files.empty?
   end
@@ -75,9 +78,25 @@ class SyncAgents
     end
   end
 
-  # --- Install external skill ---
+  # --- Gitignore management for external skills ---
 
-  def install_skill(url, name)
+  def update_skills_gitignore
+    manifest = load_manifest
+    gitignore_path = File.join(SKILLS_DIR, ".gitignore")
+
+    if manifest.empty?
+      remove_if_exists(gitignore_path) if File.exist?(gitignore_path)
+      return
+    end
+
+    lines = manifest.keys.sort.map { |name| "/#{name}/\n" }
+    content = "# External skills — fetched via ./sync-agents --install\n" + lines.join
+    write_if_changed(gitignore_path, content)
+  end
+
+  # --- Add a new external skill ---
+
+  def add_skill(url, name)
     repo = parse_github_repo(url)
     abort "Could not parse GitHub repo from: #{url}" unless repo
 
@@ -96,7 +115,7 @@ class SyncAgents
         when 0 then abort "No skills found in #{repo}"
         when 1 then name = available.first
         else abort "Multiple skills in #{repo}: #{available.join(", ")}\n" \
-                    "Specify one: ./sync-agents --install #{url} <name>"
+                    "Specify one: ./sync-agents --add #{url} <name>"
         end
         skill_src = File.join(tmpdir, name)
       end
@@ -105,7 +124,7 @@ class SyncAgents
       FileUtils.rm_rf(dest)
       FileUtils.mkdir_p(SKILLS_DIR)
       FileUtils.cp_r(skill_src, dest)
-      puts "Installed #{name} from #{repo}"
+      puts "Added #{name} from #{repo}"
 
       manifest = load_manifest
       manifest[name] = { "repo" => repo, "path" => name, "ref" => "main" }
@@ -113,7 +132,42 @@ class SyncAgents
     end
   end
 
-  # --- Update all external skills ---
+  # --- Install all external skills from manifest (skip if present) ---
+
+  def install_skills
+    manifest = load_manifest
+    if manifest.empty?
+      puts "No external skills in manifest."
+      return
+    end
+
+    manifest.each do |name, entry|
+      dest = File.join(SKILLS_DIR, name)
+      if Dir.exist?(dest) && File.exist?(File.join(dest, "SKILL.md"))
+        next
+      end
+
+      repo = entry["repo"]
+      path = entry["path"]
+      ref = entry["ref"] || "main"
+
+      Dir.mktmpdir do |tmpdir|
+        clone_repo(repo, ref, tmpdir)
+
+        skill_src = File.join(tmpdir, path)
+        unless Dir.exist?(skill_src)
+          warn "Warning: '#{path}' not found in #{repo}@#{ref}, skipping #{name}"
+          next
+        end
+
+        FileUtils.mkdir_p(SKILLS_DIR)
+        FileUtils.cp_r(skill_src, dest)
+        puts "Installed #{name} from #{repo}@#{ref}"
+      end
+    end
+  end
+
+  # --- Update all external skills (force re-fetch) ---
 
   def update_skills
     manifest = load_manifest

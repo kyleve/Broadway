@@ -17,6 +17,9 @@ xcuserdata/
 ## macOS
 .DS_Store
 
+## Generated agent files (re-create via ./sync-agents --install)
+.claude/skills/
+
 ## Obj-C/Swift specific
 *.hmap
 
