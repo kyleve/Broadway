@@ -3,6 +3,13 @@ import ProjectDescription
 let destinations: Destinations = [.iPhone, .iPad, .macCatalyst]
 let deployment: DeploymentTargets = .iOS("26.0")
 
+/// Enables Swift `package` access across all first-party targets (see SE-0386).
+private let broadwayPackageAccessSettings = Settings.settings(
+    base: [
+        "OTHER_SWIFT_FLAGS": .array(["$(inherited)", "-package-name", "Broadway"]),
+    ],
+)
+
 func framework(
     _ name: String,
     bundleIdSuffix: String,
@@ -17,6 +24,7 @@ func framework(
             deploymentTargets: deployment,
             sources: ["\(name)/Sources/**"],
             dependencies: dependencies,
+            settings: broadwayPackageAccessSettings,
         ),
         .target(
             name: "\(name)Tests",
@@ -30,6 +38,7 @@ func framework(
                 .target(name: "BroadwayTesting"),
                 .target(name: "BroadwayTestHost"),
             ],
+            settings: broadwayPackageAccessSettings,
         ),
     ]
 }
@@ -54,6 +63,7 @@ let project = Project(
             sources: ["BroadwayCatalog/Sources/**"],
             resources: ["BroadwayCatalog/Resources/**"],
             dependencies: [.target(name: "BroadwayUI")],
+            settings: broadwayPackageAccessSettings,
         ),
         .target(
             name: "BroadwayCatalogTests",
@@ -66,6 +76,7 @@ let project = Project(
                 .target(name: "BroadwayCatalog"),
                 .target(name: "BroadwayTesting"),
             ],
+            settings: broadwayPackageAccessSettings,
         ),
         .target(
             name: "BroadwayTestHost",
@@ -78,6 +89,7 @@ let project = Project(
             ]),
             sources: ["BroadwayTestHost/Sources/**"],
             dependencies: [],
+            settings: broadwayPackageAccessSettings,
         ),
         .target(
             name: "BroadwayTesting",
@@ -90,6 +102,7 @@ let project = Project(
                 .target(name: "BroadwayCore"),
                 .xctest,
             ],
+            settings: broadwayPackageAccessSettings,
         ),
     ]
         + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")])

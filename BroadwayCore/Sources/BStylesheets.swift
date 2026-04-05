@@ -22,11 +22,14 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
         self.themes = themes
     }
 
-    mutating func updateTraits(_ newTraits: BTraits) {
+    /// Keeps the resolver’s trait key in sync with ``BContext/traits``.
+    /// `package` matches the monorepo `-package-name Broadway` set in Tuist (SE-0386).
+    package mutating func updateTraits(_ newTraits: BTraits) {
         traits = newTraits
     }
 
-    mutating func updateThemes(_ newThemes: BThemes) {
+    /// Keeps the resolver’s theme key in sync with ``BContext/themes``.
+    package mutating func updateThemes(_ newThemes: BThemes) {
         themes = newThemes
     }
 
