@@ -12,10 +12,19 @@ import Foundation
 /// first access and cached for subsequent lookups with the same key.
 public struct BStylesheets: Equatable, @unchecked Sendable {
     /// The current trait values (accessibility, size class, etc.).
-    public var traits: BTraits
+    private var traits: BTraits
 
     /// The current theme values.
     public var themes: BThemes
+
+    init(traits: BTraits, themes: BThemes) {
+        self.traits = traits
+        self.themes = themes
+    }
+
+    mutating func updateTraits(_ newTraits: BTraits) {
+        traits = newTraits
+    }
 
     // MARK: Lookup
 

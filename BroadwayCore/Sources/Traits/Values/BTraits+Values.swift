@@ -35,16 +35,24 @@ extension BTraits.Overrides {
 public enum BMode: Equatable, Hashable {
     case dark
     case light
+
+    public static func from(_ style: UIUserInterfaceStyle) -> BMode {
+        switch style {
+            case .dark:
+                .dark
+            case .light, .unspecified:
+                .light
+            @unknown default:
+                .light
+        }
+    }
 }
 
 extension BMode: BTraitsValue {
     public static let defaultValue: BMode = .light
 
     @MainActor public static func currentValue(from viewController: UIViewController) -> BMode {
-        switch viewController.traitCollection.userInterfaceStyle {
-            case .dark: .dark
-            default: .light
-        }
+        .from(viewController.traitCollection.userInterfaceStyle)
     }
 
     @MainActor public static func makeObserver(

@@ -52,14 +52,6 @@ private struct CountingStylesheet: BStylesheet, Equatable {
     }
 }
 
-private struct MergedTraitsAccessibilityProbe: BStylesheet {
-    var isVoiceOverRunning: Bool
-
-    init(context: SlicingContext) {
-        isVoiceOverRunning = context.stylesheets.traits.accessibility.isVoiceOverRunning
-    }
-}
-
 private struct CycleA: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleB.self)
@@ -335,7 +327,7 @@ struct BContextTests {
         var context = BContext()
         let accessibility = BAccessibility(isVoiceOverRunning: true)
         context.baseTraits.accessibility = accessibility
-        #expect(context.stylesheets.traits.accessibility == accessibility)
+        #expect(context.traits.accessibility == accessibility)
     }
 
     @Test("Theme mutation propagates to stylesheets config")
@@ -357,10 +349,7 @@ struct BContextTests {
 
         let context = BContext(traits: base, overrides: overrides)
 
-        #expect(context.stylesheets.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
         #expect(context.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
-
-        let sheet = try context.stylesheets.get(MergedTraitsAccessibilityProbe.self)
-        #expect(sheet.isVoiceOverRunning == true)
+        _ = try context.stylesheets.get(TestStylesheet.self)
     }
 }

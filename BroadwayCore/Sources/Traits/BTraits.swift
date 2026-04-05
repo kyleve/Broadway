@@ -121,7 +121,7 @@ public struct BTraits: Equatable, Hashable, @unchecked Sendable {
 /// observation override ``currentValue(from:)`` and
 /// ``makeObserver(onChange:)`` to supply a snapshot and an observer.
 public protocol BTraitsValue: Hashable {
-    associatedtype Observer: BTraitsValueObserver = NeverObserver
+    associatedtype Observer: BTraitsValueObserver
 
     static var defaultValue: Self { get }
 
@@ -140,15 +140,6 @@ extension BTraitsValue {
         from _: UIViewController,
     ) -> Self {
         defaultValue
-    }
-}
-
-extension BTraitsValue where Observer == NeverObserver {
-    @MainActor public static func makeObserver(
-        with _: UIViewController,
-        onChange _: @MainActor @escaping @Sendable (Self) -> Void,
-    ) -> NeverObserver {
-        NeverObserver()
     }
 }
 

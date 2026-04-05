@@ -56,6 +56,14 @@ public final class BTraitOverridesViewController<Content: UIViewController>: UIV
 
     // MARK: Lifecycle
 
+    override public func didMove(toParent parent: UIViewController?) {
+        super.didMove(toParent: parent)
+
+        if parent != nil {
+            applyOverrides()
+        }
+    }
+
     override public func viewIsAppearing(_ animated: Bool) {
         super.viewIsAppearing(animated)
 

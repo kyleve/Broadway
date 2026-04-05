@@ -32,7 +32,7 @@ public struct BContext: Equatable, Sendable {
 
     public var traitOverrides: BTraits.Overrides {
         didSet {
-            stylesheets.traits = traits
+            stylesheets.updateTraits(traits)
         }
     }
 
@@ -43,7 +43,7 @@ public struct BContext: Equatable, Sendable {
     /// The current trait values (accessibility, size class, etc.).
     public var baseTraits: BTraits {
         didSet {
-            stylesheets.traits = traits
+            stylesheets.updateTraits(traits)
         }
     }
 
