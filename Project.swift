@@ -3,35 +3,28 @@ import ProjectDescription
 let destinations: Destinations = [.iPhone, .iPad, .macCatalyst]
 let deployment: DeploymentTargets = .iOS("26.0")
 
-func framework(
-    _ name: String,
+/// Local Swift package (see root `Package.swift`) for BroadwayCore, BroadwayUI, and BroadwayTesting.
+private let broadwayPackage = Package.local(path: .relativeToRoot("."))
+
+func unitTests(
+    name: String,
     bundleIdSuffix: String,
-    dependencies: [TargetDependency] = [],
-) -> [Target] {
-    [
-        .target(
-            name: name,
-            destinations: destinations,
-            product: .framework,
-            bundleId: "com.broadway.\(bundleIdSuffix)",
-            deploymentTargets: deployment,
-            sources: ["\(name)/Sources/**"],
-            dependencies: dependencies,
-        ),
-        .target(
-            name: "\(name)Tests",
-            destinations: destinations,
-            product: .unitTests,
-            bundleId: "com.broadway.\(bundleIdSuffix).tests",
-            deploymentTargets: deployment,
-            sources: ["\(name)/Tests/**"],
-            dependencies: [
-                .target(name: name),
-                .target(name: "BroadwayTesting"),
-                .target(name: "BroadwayTestHost"),
-            ],
-        ),
-    ]
+    productDependency: String,
+    sources: ProjectDescription.SourceFilesList,
+) -> Target {
+    .target(
+        name: name,
+        destinations: destinations,
+        product: .unitTests,
+        bundleId: "com.broadway.\(bundleIdSuffix).tests",
+        deploymentTargets: deployment,
+        sources: sources,
+        dependencies: [
+            .package(product: productDependency),
+            .package(product: "BroadwayTesting"),
+            .target(name: "BroadwayTestHost"),
+        ],
+    )
 }
 
 let project = Project(
@@ -40,6 +33,7 @@ let project = Project(
         defaultKnownRegions: ["en"],
         developmentRegion: "en",
     ),
+    packages: [broadwayPackage],
     targets: [
         .target(
             name: "BroadwayCatalog",
@@ -53,7 +47,9 @@ let project = Project(
             ]),
             sources: ["BroadwayCatalog/Sources/**"],
             resources: ["BroadwayCatalog/Resources/**"],
-            dependencies: [.target(name: "BroadwayUI")],
+            dependencies: [
+                .package(product: "BroadwayUI"),
+            ],
         ),
         .target(
             name: "BroadwayCatalogTests",
@@ -64,7 +60,7 @@ let project = Project(
             sources: ["BroadwayCatalog/Tests/**"],
             dependencies: [
                 .target(name: "BroadwayCatalog"),
-                .target(name: "BroadwayTesting"),
+                .package(product: "BroadwayTesting"),
             ],
         ),
         .target(
@@ -79,19 +75,17 @@ let project = Project(
             sources: ["BroadwayTestHost/Sources/**"],
             dependencies: [],
         ),
-        .target(
-            name: "BroadwayTesting",
-            destinations: destinations,
-            product: .framework,
-            bundleId: "com.broadway.testing",
-            deploymentTargets: deployment,
-            sources: ["BroadwayTesting/Sources/**"],
-            dependencies: [
-                .target(name: "BroadwayCore"),
-                .xctest,
-            ],
+        unitTests(
+            name: "BroadwayCoreTests",
+            bundleIdSuffix: "core",
+            productDependency: "BroadwayCore",
+            sources: ["BroadwayCore/Tests/**"],
         ),
-    ]
-        + framework("BroadwayUI", bundleIdSuffix: "ui", dependencies: [.target(name: "BroadwayCore")])
-        + framework("BroadwayCore", bundleIdSuffix: "core"),
+        unitTests(
+            name: "BroadwayUITests",
+            bundleIdSuffix: "ui",
+            productDependency: "BroadwayUI",
+            sources: ["BroadwayUI/Tests/**"],
+        ),
+    ],
 )

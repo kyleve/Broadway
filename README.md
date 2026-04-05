@@ -39,21 +39,42 @@ The `./ide` script also configures a Git pre-commit hook that automatically form
 tuist test
 ```
 
-Or open the generated project in Xcode and run tests with **Cmd+U**.
+Use `tuist test BroadwayCoreTests` or `tuist test BroadwayUITests` to run a single bundle. Core/UI **libraries** are defined in `Package.swift` (there is no `BroadwayCore` Xcode scheme—libraries build via the embedded Swift package).
+
+Or open the generated workspace in Xcode and run tests with **Cmd+U**.
 
 ## Project Structure
 
 ```
-BroadwayCatalog/          # Catalog app (Sources/, Resources/, Tests/)
-BroadwayUI/               # Reusable UI component framework (Sources/, Tests/)
-BroadwayCore/             # Foundational utilities framework (Sources/, Tests/)
-BroadwayTestHost/         # Minimal test host app
-BroadwayTesting/          # Shared test utilities framework
-Project.swift             # Tuist project manifest
-ide                       # Dev setup script
-swiftformat               # Run SwiftFormat
-sync-agents               # Sync AI agent configuration across tools
+/
+├── .githooks/              # Git hooks (pre-commit SwiftFormat)
+├── BroadwayCatalog/        # Catalog app (Sources/, Resources/, Tests/)
+├── BroadwayUI/             # UI framework (Sources/, Tests/)
+├── BroadwayCore/           # Core framework (Sources/, Tests/)
+├── BroadwayTestHost/       # Minimal test host app (Sources/)
+├── BroadwayTesting/        # Shared test utilities (Sources/)
+├── Plans/                  # Archived implementation plans
+├── Package.swift           # SPM libraries (Core, UI, Testing)
+├── Project.swift           # Tuist: apps, test host, xctest bundles
+├── Tuist.swift             # Tuist global configuration
+├── ide                     # Dev setup script
+├── swiftformat             # Run SwiftFormat
+└── sync-agents             # Sync AI agent configuration across tools
 ```
+
+## Targets
+
+**Swift package** (`Package.swift`): **BroadwayCore**, **BroadwayUI**, and **BroadwayTesting** library products.
+
+**Tuist / Xcode** (`Project.swift`):
+
+| Target | Product | Destinations |
+|---|---|---|
+| **BroadwayCatalog** | App | iOS, Mac Catalyst |
+| **BroadwayCatalogTests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayCoreTests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayUITests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayTestHost** | App (test host) | iOS, Mac Catalyst |
 
 ## AI Agent Skills
 
