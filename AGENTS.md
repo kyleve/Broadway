@@ -1,100 +1,62 @@
 # AGENTS.md — Repository Shape
 
-This document describes the structure and conventions of the Broadway repository for AI agents and contributors.
-
-## Overview
-
-Broadway is a SwiftUI iOS + Mac Catalyst application managed by **Tuist**. The Xcode project is not checked in — it is generated from the `Project.swift` manifest.
+Broadway is a SwiftUI iOS + Mac Catalyst design system managed by **Tuist**. The Xcode project is not checked in — it is generated from `Project.swift`.
 
 ## Directory Layout
 
 ```
 /
 ├── .githooks/              # Git hooks (pre-commit SwiftFormat lint)
-├── BroadwayCatalog/
-│   ├── Sources/            # Catalog app source code (Swift / SwiftUI)
-│   ├── Resources/          # Bundled resources (assets, localization, etc.)
-│   └── Tests/              # Catalog app unit tests
-├── BroadwayUI/
-│   ├── Sources/            # UI framework source code
-│   └── Tests/              # UI framework unit tests
-├── BroadwayCore/
-│   ├── Sources/            # Core framework source code
-│   └── Tests/              # Core framework unit tests
-├── BroadwayTestHost/
-│   └── Sources/            # Minimal test host app
-├── BroadwayTesting/
-│   └── Sources/            # Shared test utilities
-└── Plans/                  # Archived implementation plans
+├── BroadwayCatalog/        # Catalog app (Sources/, Resources/, Tests/)
+├── BroadwayUI/             # UI framework (Sources/, Tests/)
+├── BroadwayCore/           # Core framework (Sources/, Tests/)
+├── BroadwayTestHost/       # Minimal test host app (Sources/)
+├── BroadwayTesting/        # Shared test utilities (Sources/)
+├── Plans/                  # Archived implementation plans
+├── Project.swift           # Tuist project manifest
+├── Tuist.swift             # Tuist global configuration
+├── ide                     # Dev script (installs hooks, runs tuist generate)
+├── swiftformat             # Run SwiftFormat (--lint to check only)
+└── sync-agents             # Generate CLAUDE.md + .claude/skills from AGENTS.md
 ```
 
 Key root files: `Project.swift` (Tuist manifest), `Tuist.swift` (Tuist config), `.mise.toml` (tool versions), `.swiftformat` (style config), `ide` and `swiftformat` (dev scripts).
 
 ## Build System
 
-- **Tuist 4+** is used to generate the Xcode project from `Project.swift`.
+- **Tuist 4+** generates the Xcode project from `Project.swift`. The `.xcodeproj` and `Derived/` are git-ignored.
 - Tuist and SwiftFormat are version-pinned via **mise** in `.mise.toml`. Run `mise install` to install them.
-- Run `./ide` to generate the Xcode project (or `./ide -i` to run `mise exec -- tuist install` first).
-- Run `mise exec -- tuist test` to execute all tests.
-- Run `mise exec -- tuist test <SchemeName>` to test a specific target. The scheme name is the **framework name** (e.g., `BroadwayCore`), not the test target name (`BroadwayCoreTests`).
-- The generated `.xcodeproj` and `Derived/` directory are git-ignored.
+- Run `./ide` to generate the project (or `./ide -i` to run `mise exec -- tuist install` first).
+- Run `mise exec -- tuist test` to execute all tests, or `mise exec -- tuist test <SchemeName>` for a specific target.
 
 ## Formatting
 
-- **SwiftFormat** enforces consistent code style. Configuration lives in `.swiftformat`.
-- Run `./swiftformat` to format all Swift files in-place.
-- Run `./swiftformat --lint` to check without modifying (used in CI and pre-commit).
-- The `./ide` script configures `core.hooksPath` to `.githooks/`, which installs a pre-commit hook that lints staged `.swift` files.
-- CI runs `./swiftformat --lint` as a gate before build & test.
+- **SwiftFormat** enforces code style via `.swiftformat`. Run `./swiftformat` to format, `./swiftformat --lint` to check.
+- The pre-commit hook lints staged `.swift` files automatically.
 
-## Targets
+## Agent Instructions Sync
 
-| Target | Type | Bundle ID | Destinations | Min Deployment |
-|---|---|---|---|---|
-| `BroadwayCatalog` | `.app` | `com.broadway.catalog` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayCatalogTests` | `.unitTests` | `com.broadway.catalog.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayUI` | `.framework` | `com.broadway.ui` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayUITests` | `.unitTests` | `com.broadway.ui.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayCore` | `.framework` | `com.broadway.core` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayCoreTests` | `.unitTests` | `com.broadway.core.tests` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayTestHost` | `.app` | `com.broadway.testhost` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
-| `BroadwayTesting` | `.framework` | `com.broadway.testing` | iPhone, iPad, Mac Catalyst | iOS 26.0 |
+`AGENTS.md` is the source of truth for AI agent instructions. Cursor and Codex read nested `AGENTS.md` natively; Claude Code uses `CLAUDE.md` and `.claude/skills/`. Generated files (`CLAUDE.md`, `.claude/skills/`) are gitignored and created by `./sync-agents`.
 
-### Dependency Graph
+- `./sync-agents` — generate `CLAUDE.md` files and sync skills to `.claude/skills/`.
+- `./sync-agents --install` — fetch external skills from `.agents/external-skills.json` (run automatically by `./ide`).
+- `./sync-agents --add <url> [name]` — add a new external skill from GitHub.
+- `./sync-agents --update` — force re-fetch all external skills to latest.
+
+## Dependency Graph
 
 ```
-BroadwayCatalog (app) ──▶ BroadwayUI (framework) ──▶ BroadwayCore (framework)
-                                                            ▲
-BroadwayTestHost (app) ──▶ BroadwayUI ──────────────────────┤
-                                                            │
-BroadwayTesting (framework) ────────────────────────────────┘
+BroadwayCatalog (app) --> BroadwayUI (framework) --> BroadwayCore (framework)
+BroadwayTestHost (app) --> BroadwayUI --> BroadwayCore
+BroadwayTesting (framework) --> BroadwayCore
 
 All framework test targets use BroadwayTestHost and depend on BroadwayTesting.
 ```
 
 ## Key Conventions
 
-- **SwiftUI** is the UI framework. Catalog app views live under `BroadwayCatalog/Sources/`.
-- **BroadwayUI** is the reusable component library. All shared UI lives under `BroadwayUI/Sources/`.
-- **BroadwayCore** provides foundational utilities and shared logic. Source lives under `BroadwayCore/Sources/`.
-- **BroadwayTestHost** is a minimal app that serves as the test host for framework unit tests. Source lives under `BroadwayTestHost/Sources/`.
-- **BroadwayTesting** provides shared test utilities. All test targets depend on it. Source lives under `BroadwayTesting/Sources/`.
+- **Shell scripts** should be kept short (≤ ~20 lines). For anything longer, use **Ruby**.
 - **Swift Testing** (`import Testing`) is used for unit tests, not XCTest.
 - Source files use `<Target>/Sources/**` globs; test files use `<Target>/Tests/**`.
-- Resources (asset catalogs, localization files, etc.) go in `BroadwayCatalog/Resources/`.
-- The catalog app uses `@main` via `BroadwayApp.swift` as the app entry point.
 - Info.plist is auto-generated by Tuist via `infoPlist: .extendingDefault(with:)`.
-
-## Plans
-
-Implementation plans are stored in the `Plans/` directory. When you develop a plan using Cursor's plan mode, copy the final plan into `Plans/` and add an entry to the index below.
-
-**Naming convention**: `<NNN>-<YYYY-MM-DD>-<slug>.md`, where `<NNN>` is the next sequential number (zero-padded to 3 digits), `<YYYY-MM-DD>` is the date the plan was created, and `<slug>` is a short snake_case description. For example: `002-2026-03-15-dark_mode_support.md`.
-
-## Adding New Files
-
-- **New catalog app files**: Add `.swift` files to `BroadwayCatalog/Sources/`.
-- **New UI components**: Add `.swift` files to `BroadwayUI/Sources/`. Mark public API as `public`.
-- **New test files**: Add `.swift` files to the appropriate `Tests/` directory.
-- **New resources**: Add to `BroadwayCatalog/Resources/`. They are bundled via the `Resources/**` glob.
-- **New targets or dependencies**: Edit `Project.swift` at the repository root.
+- New targets or dependencies: edit `Project.swift`.

@@ -20,5 +20,8 @@ if [ "$INSTALL" = true ]; then
     mise exec -- tuist install
 fi
 
+echo "==> sync-agents --install"
+./sync-agents --install
+
 echo "==> tuist generate"
 mise exec -- tuist generate

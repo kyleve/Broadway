@@ -5,7 +5,7 @@ An open-source iOS and Mac Catalyst design system prototype.
 ## Requirements
 
 - Xcode 16+
-- [mise](https://mise.jdx.dev) (manages Tuist automatically)
+- [mise](https://mise.jdx.dev) (manages Tuist and SwiftFormat automatically)
 - iOS 26.0+
 
 ## Getting Started
@@ -22,13 +22,16 @@ Or via Homebrew:
 brew install mise
 ```
 
-### Install Tools & Generate
+### Set Up the Project
 
 ```bash
-mise install          # Installs the pinned version of Tuist from .mise.toml
-./ide                 # Generates the Xcode project
-./ide -i              # Runs tuist install first, then generates
+mise install       # Install pinned versions of Tuist and SwiftFormat
+./ide -i           # Install dependencies, fetch external skills, generate Xcode project
 ```
+
+After the initial setup, run `./ide` (without `-i`) to regenerate the Xcode project without re-installing dependencies.
+
+The `./ide` script also configures a Git pre-commit hook that automatically formats staged Swift files with SwiftFormat and keeps generated AI agent configuration in sync.
 
 ### Run Tests
 
@@ -41,22 +44,19 @@ Or open the generated project in Xcode and run tests with **Cmd+U**.
 ## Project Structure
 
 ```
-Broadway/
-├── BroadwayCatalog/
-│   ├── Sources/            # Catalog app source code
-│   ├── Resources/          # Asset catalogs, etc.
-│   └── Tests/              # Catalog app unit tests
-├── BroadwayUI/
-│   ├── Sources/            # UI framework source code
-│   └── Tests/              # UI framework unit tests
-├── BroadwayCore/
-│   ├── Sources/            # Core framework source code
-│   └── Tests/              # Core framework unit tests
-├── BroadwayTestHost/
-│   └── Sources/            # Minimal test host app
-├── BroadwayTesting/
-│   └── Sources/            # Shared test utilities
-└── Plans/                  # Archived implementation plans
+/
+├── .githooks/              # Git hooks (pre-commit SwiftFormat)
+├── BroadwayCatalog/        # Catalog app (Sources/, Resources/, Tests/)
+├── BroadwayUI/             # UI framework (Sources/, Tests/)
+├── BroadwayCore/           # Core framework (Sources/, Tests/)
+├── BroadwayTestHost/       # Minimal test host app (Sources/)
+├── BroadwayTesting/        # Shared test utilities (Sources/)
+├── Plans/                  # Archived implementation plans
+├── Project.swift           # Tuist project manifest
+├── Tuist.swift             # Tuist global configuration
+├── ide                     # Dev setup script
+├── swiftformat             # Run SwiftFormat
+└── sync-agents             # Sync AI agent configuration across tools
 ```
 
 ## Targets
@@ -71,6 +71,16 @@ Broadway/
 | **BroadwayCoreTests** | Unit Tests | iOS, Mac Catalyst |
 | **BroadwayTestHost** | App | iOS, Mac Catalyst |
 | **BroadwayTesting** | Framework | iOS, Mac Catalyst |
+
+## AI Agent Skills
+
+External skills are managed via `sync-agents`. The manifest at `.agents/external-skills.json` tracks installed skills pinned to specific commits.
+
+```bash
+./sync-agents --add <github-url> [name]   # Add a new skill from GitHub
+./sync-agents --update                    # Update all skills to latest
+./sync-agents --install                   # Fetch skills from the manifest
+```
 
 ## License
 
