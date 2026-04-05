@@ -32,7 +32,7 @@ extension BTraits.Overrides {
     }
 }
 
-public enum BMode: Equatable, Hashable {
+public enum BMode: Equatable, Hashable, Sendable {
     case dark
     case light
 
@@ -68,7 +68,7 @@ extension BMode: BTraitsValue {
     }
 }
 
-public enum BContentSizeCategory: Equatable, Hashable, Comparable {
+public enum BContentSizeCategory: Equatable, Hashable, Comparable, Sendable {
     case extraSmall
     case small
     case medium

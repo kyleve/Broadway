@@ -120,7 +120,7 @@ struct BAccessibilityTests {
 
 // MARK: - Mock SettingsProvider
 
-private final class MockSettingsProvider: BAccessibility.SettingsProvider {
+private final class MockSettingsProvider: BAccessibility.SettingsProvider, @unchecked Sendable {
     var isVoiceOverRunning = false
     var isSwitchControlRunning = false
     var isAssistiveTouchRunning = false

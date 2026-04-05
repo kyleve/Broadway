@@ -39,7 +39,9 @@ The `./ide` script also configures a Git pre-commit hook that automatically form
 tuist test
 ```
 
-Or open the generated project in Xcode and run tests with **Cmd+U**.
+Use `tuist test BroadwayCoreTests` or `tuist test BroadwayUITests` to run a single bundle. Core/UI **libraries** are defined in `Package.swift` (there is no `BroadwayCore` Xcode scheme—libraries build via the embedded Swift package).
+
+Or open the generated workspace in Xcode and run tests with **Cmd+U**.
 
 ## Project Structure
 
@@ -52,7 +54,8 @@ Or open the generated project in Xcode and run tests with **Cmd+U**.
 ├── BroadwayTestHost/       # Minimal test host app (Sources/)
 ├── BroadwayTesting/        # Shared test utilities (Sources/)
 ├── Plans/                  # Archived implementation plans
-├── Project.swift           # Tuist project manifest
+├── Package.swift           # SPM libraries (Core, UI, Testing)
+├── Project.swift           # Tuist: apps, test host, xctest bundles
 ├── Tuist.swift             # Tuist global configuration
 ├── ide                     # Dev setup script
 ├── swiftformat             # Run SwiftFormat
@@ -61,16 +64,17 @@ Or open the generated project in Xcode and run tests with **Cmd+U**.
 
 ## Targets
 
+**Swift package** (`Package.swift`): **BroadwayCore**, **BroadwayUI**, and **BroadwayTesting** library products.
+
+**Tuist / Xcode** (`Project.swift`):
+
 | Target | Product | Destinations |
 |---|---|---|
 | **BroadwayCatalog** | App | iOS, Mac Catalyst |
 | **BroadwayCatalogTests** | Unit Tests | iOS, Mac Catalyst |
-| **BroadwayUI** | Framework | iOS, Mac Catalyst |
-| **BroadwayUITests** | Unit Tests | iOS, Mac Catalyst |
-| **BroadwayCore** | Framework | iOS, Mac Catalyst |
 | **BroadwayCoreTests** | Unit Tests | iOS, Mac Catalyst |
-| **BroadwayTestHost** | App | iOS, Mac Catalyst |
-| **BroadwayTesting** | Framework | iOS, Mac Catalyst |
+| **BroadwayUITests** | Unit Tests | iOS, Mac Catalyst |
+| **BroadwayTestHost** | App (test host) | iOS, Mac Catalyst |
 
 ## AI Agent Skills
 

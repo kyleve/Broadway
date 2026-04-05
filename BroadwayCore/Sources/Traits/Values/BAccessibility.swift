@@ -156,7 +156,7 @@ extension BAccessibility {
     /// A provider which returns the current accessibility settings on the device.
     ///
     /// Instead of accessing `UIAccessibility.{...}` directly, utilize `BAccessibility.systemSettings`.
-    public protocol SettingsProvider: AnyObject {
+    public protocol SettingsProvider: AnyObject, Sendable {
         // MARK: Assistive Technologies
 
         var isVoiceOverRunning: Bool { get }
@@ -300,7 +300,7 @@ extension BAccessibility {
 }
 
 extension BAccessibility {
-    private final class SystemSettingsProvider: SettingsProvider {
+    private final class SystemSettingsProvider: SettingsProvider, @unchecked Sendable {
         var isVoiceOverRunning: Bool {
             UIAccessibility.isVoiceOverRunning
         }
