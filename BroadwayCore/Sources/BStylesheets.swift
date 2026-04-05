@@ -15,7 +15,7 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
     private var traits: BTraits
 
     /// The current theme values.
-    public var themes: BThemes
+    private var themes: BThemes
 
     init(traits: BTraits, themes: BThemes) {
         self.traits = traits
@@ -24,6 +24,10 @@ public struct BStylesheets: Equatable, @unchecked Sendable {
 
     mutating func updateTraits(_ newTraits: BTraits) {
         traits = newTraits
+    }
+
+    mutating func updateThemes(_ newThemes: BThemes) {
+        themes = newThemes
     }
 
     // MARK: Lookup

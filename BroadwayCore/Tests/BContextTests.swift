@@ -331,12 +331,12 @@ struct BContextTests {
     }
 
     @Test("Theme mutation propagates to stylesheets config")
-    func themePropagation() {
+    func themePropagation() throws {
         var context = BContext()
         context.themes[ColorTheme.self] = .dark
 
-        let theme: ColorTheme = context.stylesheets.themes[ColorTheme.self]
-        #expect(theme == .dark)
+        let sheet = try context.stylesheets.get(TestStylesheet.self)
+        #expect(sheet.color == .dark)
     }
 
     @Test("Stylesheets use merged traits when initializer passes non-empty overrides")

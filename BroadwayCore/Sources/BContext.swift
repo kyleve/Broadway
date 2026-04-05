@@ -50,7 +50,7 @@ public struct BContext: Equatable, Sendable {
     /// The current theme values.
     @CopyOnWrite public var themes: BThemes {
         didSet {
-            stylesheets.themes = themes
+            stylesheets.updateThemes(themes)
         }
     }
 
