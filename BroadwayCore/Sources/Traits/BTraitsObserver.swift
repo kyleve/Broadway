@@ -62,6 +62,8 @@ public final class BTraitsObserver {
 
     /// Starts all registered trait observers. Safe to call multiple times.
     public func start() {
+        guard !started else { return }
+        started = true
         for observer in observers {
             observer.start()
         }
@@ -69,6 +71,8 @@ public final class BTraitsObserver {
 
     /// Stops all registered trait observers. Safe to call multiple times.
     public func stop() {
+        guard started else { return }
+        started = false
         for observer in observers {
             observer.stop()
         }
@@ -78,4 +82,5 @@ public final class BTraitsObserver {
 
     private let onChange: @MainActor @Sendable (BTraits) -> Void
     private var observers: [any BTraitsValueObserver] = []
+    private var started = false
 }

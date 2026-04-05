@@ -52,6 +52,14 @@ private struct CountingStylesheet: BStylesheet, Equatable {
     }
 }
 
+private struct MergedTraitsAccessibilityProbe: BStylesheet {
+    var isVoiceOverRunning: Bool
+
+    init(context: SlicingContext) {
+        isVoiceOverRunning = context.stylesheets.traits.accessibility.isVoiceOverRunning
+    }
+}
+
 private struct CycleA: BStylesheet {
     init(context: SlicingContext) throws {
         _ = try context.stylesheets.get(CycleB.self)
@@ -337,5 +345,22 @@ struct BContextTests {
 
         let theme: ColorTheme = context.stylesheets.themes[ColorTheme.self]
         #expect(theme == .dark)
+    }
+
+    @Test("Stylesheets use merged traits when initializer passes non-empty overrides")
+    func stylesheetsTraitsMatchMergedAtInit() throws {
+        var base = BTraits()
+        base.accessibility = BAccessibility(isVoiceOverRunning: false)
+
+        var overrides = BTraits.Overrides()
+        overrides.accessibility = BAccessibility(isVoiceOverRunning: true)
+
+        let context = BContext(traits: base, overrides: overrides)
+
+        #expect(context.stylesheets.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
+        #expect(context.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
+
+        let sheet = try context.stylesheets.get(MergedTraitsAccessibilityProbe.self)
+        #expect(sheet.isVoiceOverRunning == true)
     }
 }

@@ -72,4 +72,51 @@ import UIKit
             #expect(child?.traitCollection.bContext == root.context)
         }
     }
+
+    @Test("Trait override container preserves inherited base traits and themes on screen")
+    func traitOverridesPreserveInheritedContextAtLeaf() throws {
+        try show(BRootViewController {
+            BTraitOverridesViewController(set: \.accessibility, to: BAccessibility(isVoiceOverRunning: true)) {
+                UIViewController()
+            }
+        }) { root in
+            root.view.layoutIfNeeded()
+            guard
+                let overridesVC = root.children.first as? BTraitOverridesViewController<UIViewController>,
+                let leaf = overridesVC.content,
+                let rootContext = root.context
+            else {
+                Issue.record("Expected override container, leaf, and root context")
+                return
+            }
+
+            let leafContext = leaf.traitCollection.bContext
+            #expect(leafContext.baseTraits == rootContext.baseTraits)
+            #expect(leafContext.themes == rootContext.themes)
+            #expect(leafContext.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
+        }
+    }
+
+    @Test("Trait override container publishes full inherited context to traitOverrides")
+    func traitOverridesPublishedContextPreservesBaseAndThemes() throws {
+        try show(BRootViewController {
+            BTraitOverridesViewController(set: \.accessibility, to: BAccessibility(isVoiceOverRunning: true)) {
+                UIViewController()
+            }
+        }) { root in
+            root.view.layoutIfNeeded()
+            guard
+                let overridesVC = root.children.first as? BTraitOverridesViewController<UIViewController>,
+                let rootContext = root.context
+            else {
+                Issue.record("Expected override container and root context")
+                return
+            }
+
+            let published = overridesVC.traitOverrides.bContext
+            #expect(published.baseTraits == rootContext.baseTraits)
+            #expect(published.themes == rootContext.themes)
+            #expect(published.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
+        }
+    }
 }

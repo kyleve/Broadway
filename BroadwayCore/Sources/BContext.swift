@@ -20,7 +20,10 @@ public struct BContext: Equatable, Sendable {
         baseTraits = traits
         traitOverrides = overrides
         self.themes = themes
-        stylesheets = BStylesheets(traits: traits, themes: themes)
+        stylesheets = BStylesheets(
+            traits: baseTraits.merging(with: traitOverrides),
+            themes: themes,
+        )
     }
 
     init() {

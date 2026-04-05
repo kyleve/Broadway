@@ -89,9 +89,14 @@ public final class BTraitOverridesViewController<Content: UIViewController>: UIV
     }
 
     private func applyOverrides() {
-        var current = traitCollection.bContext.traitOverrides
-        overrides(.init(traits: traitCollection.bContext.traits), &current)
-        traitOverrides.bContext.traitOverrides = current
+        // Prefer the parent's resolved traits: `traitCollection` on `self` can lag
+        // behind the ancestor chain for custom `UITraitDefinition`s during
+        // `viewIsAppearing`, so read the merged collection from `parent` when embedded.
+        var context = parent?.traitCollection.bContext ?? traitCollection.bContext
+        var current = context.traitOverrides
+        overrides(.init(traits: context.traits), &current)
+        context.traitOverrides = current
+        traitOverrides.bContext = context
     }
 
     @objc private func onTraitsDidChange(
