@@ -1,6 +1,5 @@
 @testable import BroadwayCore
 import BroadwayTesting
-import ObjectiveC
 import Testing
 import UIKit
 
@@ -41,28 +40,8 @@ private struct StartCountingTrait: BTraitsValue, Hashable {
 }
 
 private enum SeqTraitTest {
+    static let notificationCenter = NotificationCenter()
     static let notificationName = Notification.Name("BroadwayTests.SeqTrait")
-}
-
-/// Per–view-controller notification center so parallel tests do not cross-post.
-private enum SeqTraitAssoc {
-    private static var notificationCenterKey: UInt8 = 0
-
-    static func setNotificationCenter(_ viewController: UIViewController, _ center: NotificationCenter) {
-        objc_setAssociatedObject(
-            viewController,
-            &notificationCenterKey,
-            center,
-            .OBJC_ASSOCIATION_RETAIN_NONATOMIC,
-        )
-    }
-
-    static func notificationCenter(for viewController: UIViewController) -> NotificationCenter {
-        guard let center = objc_getAssociatedObject(viewController, &notificationCenterKey) as? NotificationCenter else {
-            preconditionFailure("SeqTrait tests must set a notification center on the hosted view controller.")
-        }
-        return center
-    }
 }
 
 private struct SeqTrait: BTraitsValue, Hashable {
@@ -79,33 +58,26 @@ private struct SeqTrait: BTraitsValue, Hashable {
     }
 
     @MainActor static func makeObserver(
-        with viewController: UIViewController,
+        with _: UIViewController,
         onChange: @MainActor @escaping @Sendable (SeqTrait) -> Void,
     ) -> SeqTraitObserver {
-        SeqTraitObserver(viewController: viewController, onChange: onChange)
+        SeqTraitObserver(onChange: onChange)
     }
 }
 
 @MainActor
 private final class SeqTraitObserver: BTraitsValueObserver {
-    private weak var viewController: UIViewController?
     private var token: NSObjectProtocol?
-    private var centerUsedForObservation: NotificationCenter?
     private var nextGeneration = 0
     private let onChange: @MainActor @Sendable (SeqTrait) -> Void
 
-    init(
-        viewController: UIViewController,
-        onChange: @escaping @MainActor @Sendable (SeqTrait) -> Void,
-    ) {
-        self.viewController = viewController
+    init(onChange: @escaping @MainActor @Sendable (SeqTrait) -> Void) {
         self.onChange = onChange
     }
 
     func start() {
-        guard token == nil, let viewController else { return }
-        let center = SeqTraitAssoc.notificationCenter(for: viewController)
-        centerUsedForObservation = center
+        guard token == nil else { return }
+        let center = SeqTraitTest.notificationCenter
         token = center.addObserver(
             forName: SeqTraitTest.notificationName,
             object: nil,
@@ -120,11 +92,10 @@ private final class SeqTraitObserver: BTraitsValueObserver {
     }
 
     func stop() {
-        if let token, let center = centerUsedForObservation {
-            center.removeObserver(token)
+        if let token {
+            SeqTraitTest.notificationCenter.removeObserver(token)
         }
         token = nil
-        centerUsedForObservation = nil
     }
 }
 
@@ -213,22 +184,19 @@ private final class SeqTraitObserver: BTraitsValueObserver {
         traits.register(SeqTrait.self)
 
         let anchor = UIViewController()
-        let center = NotificationCenter()
         try show(anchor) { hosted in
-            SeqTraitAssoc.setNotificationCenter(hosted, center)
-
             var aggregateChangeCount = 0
             let observer = BTraitsObserver(traits: traits, from: hosted) { _ in
                 aggregateChangeCount += 1
             }
             observer.start()
 
-            center.post(name: SeqTraitTest.notificationName, object: nil)
+            SeqTraitTest.notificationCenter.post(name: SeqTraitTest.notificationName, object: nil)
             #expect(aggregateChangeCount == 1)
 
             observer.stop()
 
-            center.post(name: SeqTraitTest.notificationName, object: nil)
+            SeqTraitTest.notificationCenter.post(name: SeqTraitTest.notificationName, object: nil)
             #expect(aggregateChangeCount == 1)
         }
     }
