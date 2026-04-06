@@ -4,6 +4,9 @@ let destinations: Destinations = [.iPhone, .iPad, .macCatalyst]
 let deployment: DeploymentTargets = .iOS("26.0")
 
 /// Local Swift package (see root `Package.swift`) for BroadwayCore, BroadwayUI, and BroadwayTesting.
+///
+/// The former Tuist `BroadwayTesting` framework target linked `.xctest`; the package library only
+/// needs UIKit (`show`, etc.) and does not link XCTest, so that dependency is not carried over.
 private let broadwayPackage = Package.local(path: .relativeToRoot("."))
 
 func unitTests(

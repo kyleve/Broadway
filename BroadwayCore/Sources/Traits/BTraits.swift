@@ -152,8 +152,8 @@ extension BTraitsValue {
     func stop()
 }
 
-/// A no-op observer used as the default ``BTraitsValue/Observer``
-/// for trait values that do not require live observation.
+/// A no-op observer type conformers can return from ``BTraitsValue/makeObserver``
+/// when a trait has no live system source to subscribe to.
 @MainActor public final class NeverObserver: BTraitsValueObserver {
     public init() {}
     public func start() {}

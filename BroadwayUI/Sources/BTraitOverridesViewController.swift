@@ -9,9 +9,12 @@ import UIKit
 /// A container view controller that applies ``BTraits/Overrides`` to the
 /// inherited ``BContext`` before passing it to its child.
 ///
-/// Child creation and override application are deferred until the
-/// view controller enters a valid view hierarchy (`viewIsAppearing`),
-/// matching ``BRootViewController``'s lazy setup pattern.
+/// Override values are refreshed when embedded (`didMove(toParent:)`) and when
+/// inherited traits change, so the subtree keeps the correct merged context
+/// before the child is created.
+///
+/// Child creation is deferred until the view controller enters a valid view
+/// hierarchy (`viewIsAppearing`), matching ``BRootViewController``'s lazy setup pattern.
 public final class BTraitOverridesViewController<Content: UIViewController>: UIViewController {
     // MARK: Public
 

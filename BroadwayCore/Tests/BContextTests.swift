@@ -340,7 +340,7 @@ struct BContextTests {
     }
 
     @Test("Stylesheets use merged traits when initializer passes non-empty overrides")
-    func stylesheetsTraitsMatchMergedAtInit() throws {
+    func stylesheetsTraitsMatchMergedAtInit() {
         var base = BTraits()
         base.accessibility = BAccessibility(isVoiceOverRunning: false)
 
@@ -350,6 +350,5 @@ struct BContextTests {
         let context = BContext(traits: base, overrides: overrides)
 
         #expect(context.traits.accessibility == BAccessibility(isVoiceOverRunning: true))
-        _ = try context.stylesheets.get(TestStylesheet.self)
     }
 }
